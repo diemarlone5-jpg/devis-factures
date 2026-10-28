@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Devis &amp; Factures</title>
+<style>
+  :root{
+    --vert:#0E3B2E; --or:#C9A227; --creme:#F6F2E7; --bord:#d9d4c6;
+    --texte:#1c1c1c; --gris:#6b6b6b;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:'Segoe UI',system-ui,Arial,sans-serif;background:#eef0ec;color:var(--texte);font-size:15px}
+  .app{max-width:920px;margin:0 auto;padding:14px 14px 90px}
+  header.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+  .brand{font-weight:700;color:var(--vert);font-size:17px;line-height:1.2}
+  .brand small{display:block;font-weight:400;color:var(--gris);font-size:11.5px}
+  .tabs{display:flex;gap:6px;background:#fff;padding:5px;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+  .tab{flex:1;border:0;background:transparent;padding:10px;border-radius:9px;font-weight:600;color:var(--gris);font-size:14px;cursor:pointer}
+  .tab.on{background:var(--vert);color:#fff}
+  .card{background:#fff;border-radius:14px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:1.1px;color:var(--vert);margin:0 0 10px}
+  label{display:block;font-size:12px;color:var(--gris);margin-bottom:4px;font-weight:600}
+  input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--bord);border-radius:9px;font-size:15px;font-family:inherit;background:#fff;color:var(--texte)}
+  input:focus,select:focus,textarea:focus{outline:2px solid rgba(201,162,39,.45);border-color:var(--or)}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>div{flex:1;min-width:150px}
+  .mb{margin-bottom:10px}
+  .lines{width:100%;border-collapse:collapse;margin-top:6px}
+  .lines th{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--gris);text-align:left;padding:6px 4px;border-bottom:1px solid var(--bord)}
+  .lines td{padding:5px 4px;vertical-align:middle}
+  .lines input{padding:9px;font-size:14px}
+  .lines .num{text-align:right}
+  .lines .del{border:0;background:#fbeaea;color:#a33;border-radius:8px;width:34px;height:34px;font-size:17px;cursor:pointer}
+  .btn{border:0;border-radius:11px;padding:13px 16px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit}
+  .btn-p{background:var(--vert);color:#fff}
+  .btn-g{background:var(--or);color:#17251f}
+  .btn-s{background:#fff;border:1px solid var(--bord);color:var(--vert)}
+  .btn-d{background:#fbeaea;color:#a33}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .btns .btn{flex:1;min-width:130px}
+  .totaux{margin-top:12px;border-top:1px solid var(--bord);padding-top:10px}
+  .totaux div{display:flex;justify-content:space-between;padding:5px 0;font-size:14px}
+  .totaux .grand{font-size:19px;font-weight:800;color:var(--vert);border-top:1px solid var(--bord);margin-top:6px;padding-top:8px}
+  .hint{font-size:11.5px;color:var(--gris);margin-top:6px;line-height:1.4}
+  .pill{display:inline-block;font-size:11px;padding:3px 9px;border-radius:20px;background:var(--creme);color:var(--vert);font-weight:700}
+  .pill.paye{background:#e3f2e8;color:#1e6b3a}
+  .pill.impaye{background:#fbeaea;color:#a33}
+  .pill.envoye{background:#eef1fa;color:#33478a}
+  .pill.accepte{background:#e9f4ee;color:#226245}
+  table.reg{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.reg th{text-align:left;font-size:10.5px;text-transform:uppercase;color:var(--gris);border-bottom:1px solid var(--bord);padding:8px 6px}
+  table.reg td{padding:9px 6px;border-bottom:1px solid #f0eee8;vertical-align:top}
+  table.reg tr{cursor:pointer}
+  table.reg select{border:1px solid var(--bord);border-radius:20px;padding:5px 8px;font-size:12px;background:#fff;color:var(--vert);font-weight:600}
+  .vide{color:var(--gris);text-align:center;padding:26px 10px;font-size:13.5px}
+  .doc{background:#fff;padding:16mm 14mm;max-width:210mm;margin:0 auto;display:none}
+  .doc .dh{display:flex;justify-content:space-between;gap:14px;border-bottom:2px solid var(--vert);padding-bottom:10px;margin-bottom:14px}
+  .doc .soc{font-weight:800;color:var(--vert);font-size:16px}
+  .doc .soc small{display:block;font-weight:400;color:#555;font-size:10.5px;line-height:1.45}
+  .doc .type{text-align:right}
+  .doc .type b{font-size:20px;color:var(--vert);letter-spacing:.5px}
+  .doc .type span{display:block;font-size:11px;color:#555}
+  .doc .parties{display:flex;gap:14px;margin-bottom:12px}
+  .doc .parties>div{flex:1;font-size:11.5px;line-height:1.45}
+  .doc .parties b{color:var(--vert)}
+  table.doc-t{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px}
+  table.doc-t th{background:var(--vert);color:#fff;text-align:left;padding:6px;font-size:10.5px}
+  table.doc-t td{padding:6px;border-bottom:1px solid #e6e2d6}
+  table.doc-t .n{text-align:right;white-space:nowrap}
+  .doc .tot{margin-left:auto;width:62%;margin-top:8px;font-size:11.5px}
+  .doc .tot div{display:flex;justify-content:space-between;padding:3px 0}
+  .doc .tot .g{border-top:1px solid var(--vert);margin-top:4px;padding-top:5px;font-size:14px;font-weight:800;color:var(--vert)}
+  .doc .fne{border:1px dashed #b9b19c;background:#fbf8ef;padding:7px 9px;margin-top:12px;font-size:9.5px;color:#4a4a4a;line-height:1.45}
+  .doc .pied{margin-top:12px;border-top:1px solid #ddd;padding-top:6px;font-size:9px;color:#777;line-height:1.4}
+  .doc h4{font-size:11px;margin:0 0 4px;color:var(--vert)}
+  #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--vert);color:#fff;
+    padding:13px 20px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:90%;text-align:center}
+  #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media print{
+    body{background:#fff}
+    .app{display:none!important}
+    #toast{display:none!important}
+    .doc{display:block!important;padding:0;max-width:none}
+    @page{size:A4;margin:14mm}
+  }
+  @media (max-width:560px){
+    .row>div{min-width:100%}
+    .lines th:nth-child(1){width:46%}
+  }
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+<div class="app">
+  <header class="top">
+    <div class="brand">Devis &amp; Factures<small id="socLabel">Votre entreprise</small></div>
+    <div class="tabs">
+      <button class="tab on" data-tab="edit">Nouveau</button>
+      <button class="tab" data-tab="reg">Registre</button>
+    </div>
+  </header>
+
+  <!-- ============ EDITEUR ============ -->
+  <section id="vue-edit">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h2 style="margin:0">Votre entreprise</h2>
+        <button class="btn btn-s" id="btnNew" style="padding:7px 12px;font-size:12.5px">+ Nouveau document</button>
+      </div>
+      <div class="row mb">
+        <div><label>Nom de l'entreprise</label><input id="socNom" placeholder="Ex. KOFFI BÂTIMENT"></div>
+        <div><label>Téléphone</label><input id="socTel" placeholder="07 00 00 00 00"></div>
+      </div>
+      <div class="row">
+        <div><label>Adresse</label><input id="socAdr" placeholder="Yopougon, Abidjan"></div>
+        <div><label>NCC / RCCM</label><input id="socNcc" placeholder="CI-ABJ-2026-B-00000"></div>
+      </div>
+      <p class="hint">Ces informations apparaissent sur vos documents. Elles sont enregistrées sur cet appareil.</p>
+    </div>
+
+    <div class="card">
+      <h2>Client</h2>
+      <div class="row mb">
+        <div><label>Nom du client</label><input id="cliNom" placeholder="Ex. ENTREPRISE SOTRA CI"></div>
+        <div><label>Téléphone</label><input id="cliTel" placeholder="05 00 00 00 00"></div>
+      </div>
+      <div class="row">
+        <div><label>Adresse</label><input id="cliAdr" placeholder="Marcory, Abidjan"></div>
+        <div><label>Date</label><input id="date" type="date"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Prestations / produits</h2>
+      <table class="lines">
+        <thead><tr><th>Désignation</th><th style="width:64px">Qté</th><th style="width:110px">Prix unit.</th><th style="width:96px" class="num">Total</th><th></th></tr></thead>
+        <tbody id="lignes"></tbody>
+      </table>
+      <div class="btns"><button class="btn btn-s" id="addLine">+ Ajouter une ligne</button></div>
+
+      <div class="row" style="margin-top:12px">
+        <div><label>TVA</label>
+          <select id="tva"><option value="18">18 %</option><option value="9">9 %</option><option value="0">Exonéré</option></select>
+        </div>
+        <div><label>Remise (FCFA)</label><input id="remise" type="number" value="0" min="0"></div>
+        <div><label>Acompte déjà versé (FCFA)</label><input id="acompte" type="number" value="0" min="0"></div>
+      </div>
+
+      <div class="totaux">
+        <div><span>Sous-total</span><b id="tSous">0 F</b></div>
+        <div><span>TVA</span><b id="tTva">0 F</b></div>
+        <div><span>Remise</span><b id="tRem">0 F</b></div>
+        <div class="grand"><span>Net à payer</span><span id="tNet">0 F</span></div>
+        <div id="ligneAcompte" style="display:none"><span>Reste à payer</span><b id="tReste">0 F</b></div>
+      </div>
+
+      <div class="btns">
+        <button class="btn btn-g" id="btnApercu">Voir / Imprimer le PDF</button>
+        <button class="btn btn-p" id="btnSave">Enregistrer</button>
+        <button class="btn btn-s" id="btnFact">Convertir en facture</button>
+      </div>
+      <p class="hint">« Voir / Imprimer » ouvre le document prêt à être enregistré en PDF ou imprimé. Aucune connexion n'est nécessaire.</p>
+    </div>
+  </section>
+
+  <!-- ============ REGISTRE ============ -->
+  <section id="vue-reg" style="display:none">
+    <div class="card">
+      <h2>Registre des documents</h2>
+      <div id="regWrap"></div>
+      <div class="btns" style="margin-top:14px">
+        <button class="btn btn-s" id="btnExport">Sauvegarder une copie</button>
+        <button class="btn btn-s" id="btnImport">Restaurer une copie</button>
+        <button class="btn btn-d" id="btnReset">Tout effacer</button>
+        <input type="file" id="fileImport" accept=".json,application/json" style="display:none">
+      </div>
+      <p class="hint">Cliquez sur une ligne pour rouvrir le document. Les données restent sur cet appareil.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ============ DOCUMENT IMPRIMABLE ============ -->
+<div class="doc" id="doc">
+  <div class="dh">
+    <div class="soc"><span id="dSoc">VOTRE ENTREPRISE</span>
+      <small id="dSocInfo"></small>
+    </div>
+    <div class="type"><b id="dType">DEVIS</b><span id="dNum">DEV-2026-0001</span><span id="dDate"></span></div>
+  </div>
+
+  <div class="parties">
+    <div><b>Émetteur</b><br><span id="dEmetteur"></span></div>
+    <div><b>Client</b><br><span id="dClient"></span></div>
+  </div>
+
+  <table class="doc-t">
+    <thead><tr><th>Désignation</th><th class="n">Qté</th><th class="n">P.U.</th><th class="n">Montant</th></tr></thead>
+    <tbody id="dLignes"></tbody>
+  </table>
+
+  <div class="tot">
+    <div><span>Sous-total</span><span id="dSous"></span></div>
+    <div><span>TVA <span id="dTvaTxt"></span></span><span id="dTva"></span></div>
+    <div><span>Remise</span><span id="dRem"></span></div>
+    <div class="g"><span>Net à payer</span><span id="dNet"></span></div>
+    <div id="dAcompteLine" style="display:none"><span>Acompte versé</span><span id="dAcompte"></span></div>
+    <div id="dResteLine" style="display:none;font-weight:700"><span>Reste à payer</span><span id="dReste"></span></div>
+  </div>
+
+  <div class="fne" id="dFne">
+    <b>Mentions FNE.</b> Document à certifier sur la plateforme de la Direction Générale des Impôts avant remise au client.
+    Numéro de facture normalisée : <b>à compléter après certification</b> — Référence / QR code DGI : <b>à reporter</b>.
+  </div>
+
+  <div class="pied" id="dPied"></div>
+</div>
+
+<script>
+const F = n => (Math.round(n||0)).toLocaleString('fr-FR').replace(/\u202f|\u00a0/g,' ') + ' F';
+const $ = id => document.getElementById(id);
+let etat = JSON.parse(localStorage.getItem('df_v1') || '{"docs":[],"compteur":{"DEV":0,"FACT":0}}');
+let courant = { type:'DEV', id:null, lignes:[{des:'',qte:1,pu:0}] };
+
+function sauver(){ localStorage.setItem('df_v1', JSON.stringify(etat)); }
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  clearTimeout(window.__tt); window.__tt = setTimeout(()=>t.classList.remove('on'), 2600);
+}
+function convertir(){
+  if(courant.type !== 'DEV'){ toast('Ce document est déjà une facture.'); return; }
+  if(!courant.lignes.some(l=>l.des||l.pu)){ toast('Ajoutez au moins une ligne avant de convertir.'); return; }
+  const d = $('date').value; 
+  courant = {type:'FACT', id:null, num:null, lignes:JSON.parse(JSON.stringify(courant.lignes))};
+  if(d) $('date').value = d;
+  remplirDoc(); enregistrer(); toast('Facture créée : ' + courant.num);
+}
+
+function soc(){
+  return { nom:$('socNom').value || 'VOTRE ENTREPRISE', tel:$('socTel').value, adr:$('socAdr').value, ncc:$('socNcc').value };
+}
+function chargerSoc(){
+  const s = JSON.parse(localStorage.getItem('df_soc') || '{}');
+  ['socNom','socTel','socAdr','socNcc'].forEach(k=>{ if(s[k]) $(k).value = s[k]; });
+  $('socLabel').textContent = s.socNom || 'Votre entreprise';
+}
+function garderSoc(){
+  const s = {socNom:$('socNom').value,socTel:$('socTel').value,socAdr:$('socAdr').value,socNcc:$('socNcc').value};
+  localStorage.setItem('df_soc', JSON.stringify(s));
+  $('socLabel').textContent = s.socNom || 'Votre entreprise';
+}
+
+function dessinerLignes(){
+  const tb = $('lignes'); tb.innerHTML = '';
+  courant.lignes.forEach((l,i)=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><input data-i="${i}" data-k="des" value="${(l.des||'').replace(/"/g,'&quot;')}" placeholder="Ex. Fourniture et pose de carreaux"></td>
+      <td><input data-i="${i}" data-k="qte" type="number" min="0" step="1" value="${l.qte}"></td>
+      <td><input data-i="${i}" data-k="pu" type="number" min="0" step="500" value="${l.pu}"></td>
+      <td class="num" id="lt${i}">${F(l.qte*l.pu)}</td>
+      <td><button class="del" data-del="${i}">×</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const i = +e.target.dataset.i, k = e.target.dataset.k;
+      courant.lignes[i][k] = (k==='des') ? e.target.value : (parseFloat(e.target.value)||0);
+      $('lt'+i).textContent = F(courant.lignes[i].qte*courant.lignes[i].pu);
+      calc();
+    });
+  });
+  tb.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
+    if(courant.lignes.length===1) return;
+    courant.lignes.splice(+b.dataset.del,1); dessinerLignes(); calc();
+  }));
+}
+
+function totaux(){
+  const sous = courant.lignes.reduce((s,l)=>s + (l.qte||0)*(l.pu||0),0);
+  const tx = parseFloat($('tva').value)||0;
+  const tva = sous*tx/100;
+  const rem = parseFloat($('remise').value)||0;
+  const net = Math.max(0, sous + tva - rem);
+  const ac = parseFloat($('acompte').value)||0;
+  return {sous,tx,tva,rem,net,ac,reste:Math.max(0,net-ac)};
+}
+function calc(){
+  const t = totaux();
+  $('tSous').textContent = F(t.sous);
+  $('tTva').textContent = F(t.tva);
+  $('tRem').textContent = F(t.rem);
+  $('tNet').textContent = F(t.net);
+  $('ligneAcompte').style.display = t.ac>0 ? 'flex' : 'none';
+  $('tReste').textContent = F(t.reste);
+}
+
+function numSuivant(type){
+  etat.compteur = etat.compteur || {DEV:0,FACT:0};
+  etat.compteur[type] = (etat.compteur[type]||0)+1;
+  return type + '-' + new Date().getFullYear() + '-' + String(etat.compteur[type]).padStart(4,'0');
+}
+
+function remplirDoc(){
+  const s = soc(), t = totaux();
+  const num = courant.num || (courant.id ? (etat.docs.find(d=>d.id===courant.id)||{}).num : numSuivant(courant.type));
+  courant.num = num;
+  $('dSoc').textContent = s.nom;
+  $('dSocInfo').innerHTML = [s.adr, s.tel ? 'Tél. '+s.tel : '', s.ncc ? 'NCC/RCCM : '+s.ncc : ''].filter(Boolean).join('<br>');
+  $('dType').textContent = courant.type === 'DEV' ? 'DEVIS' : 'FACTURE';
+  $('dNum').textContent = num;
+  const d = $('date').value ? new Date($('date').value+'T12:00:00') : new Date();
+  $('dDate').textContent = d.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+  $('dEmetteur').innerHTML = [s.nom, s.adr, s.tel, s.ncc].filter(Boolean).join('<br>');
+  $('dClient').innerHTML = [$('cliNom').value||'—', $('cliAdr').value, $('cliTel').value].filter(Boolean).join('<br>');
+  $('dLignes').innerHTML = courant.lignes.filter(l=>l.des||l.pu).map(l=>
+    `<tr><td>${(l.des||'').replace(/</g,'&lt;')}</td><td class="n">${l.qte}</td><td class="n">${F(l.pu)}</td><td class="n">${F(l.qte*l.pu)}</td></tr>`
+  ).join('');
+  $('dSous').textContent = F(t.sous);
+  $('dTvaTxt').textContent = t.tx ? '('+t.tx+' %)' : '';
+  $('dTva').textContent = F(t.tva);
+  $('dRem').textContent = F(t.rem);
+  $('dNet').textContent = F(t.net);
+  $('dAcompteLine').style.display = t.ac>0?'flex':'none';
+  $('dAcompte').textContent = F(t.ac);
+  $('dResteLine').style.display = t.ac>0?'flex':'none';
+  $('dReste').textContent = F(t.reste);
+  $('dPied').innerHTML = (courant.type==='DEV' ? 'Devis valable 30 jours. ' : '') +
+    'Paiement par mobile money ou virement. Tout retard de paiement peut entraîner des frais de relance.<br>' +
+    'Document généré par le système de devis et factures de ' + s.nom + '.';
+}
+
+function apercu(){
+  remplirDoc();
+  window.print();
+}
+
+function enregistrer(){
+  remplirDoc();
+  const doc = {
+    id: courant.id || (Date.now()+''+Math.floor(Math.random()*99)),
+    type: courant.type, num: courant.num,
+    date: $('date').value || new Date().toISOString().slice(0,10),
+    client: $('cliNom').value, tel: $('cliTel').value, adr: $('cliAdr').value,
+    lignes: JSON.parse(JSON.stringify(courant.lignes)), tva:+$('tva').value,
+    remise:+$('remise').value, acompte:+$('acompte').value,
+    total: totaux().net, statut: (etat.docs.find(d=>d.id===courant.id)||{}).statut || (courant.type==='DEV'?'brouillon':'emise')
+  };
+  const i = etat.docs.findIndex(d=>d.id===doc.id);
+  if(i>=0) etat.docs[i]=doc; else etat.docs.unshift(doc);
+  courant.id = doc.id; courant.num = doc.num;
+  sauver(); afficherRegistre();
+  toast('Enregistré : ' + doc.num);
+}
+
+function afficherRegistre(){
+  const w = $('regWrap');
+  if(!etat.docs.length){ w.innerHTML = '<div class="vide">Aucun document enregistré pour le moment.</div>'; return; }
+  let h = '<table class="reg"><thead><tr><th>N°</th><th>Client</th><th>Date</th><th style="text-align:right">Montant</th><th>Statut</th></tr></thead><tbody>';
+  const STATUTS = ['brouillon','envoyé','accepté','payé','impayé'];
+  etat.docs.forEach(d=>{
+    const opts = STATUTS.map(s=>`<option value="${s}"${s===d.statut?' selected':''}>${s}</option>`).join('');
+    h += `<tr data-open="${d.id}"><td><b>${d.num}</b></td><td>${(d.client||'—').replace(/</g,'&lt;')}</td>
+      <td>${d.date}</td><td style="text-align:right;white-space:nowrap"><b>${F(d.total)}</b></td>
+      <td><select class="statut" data-statut="${d.id}">${opts}</select></td></tr>`;
+  });
+  w.innerHTML = h + '</tbody></table>';
+  w.querySelectorAll('[data-open]').forEach(tr=>tr.addEventListener('click',()=>ouvrir(tr.dataset.open)));
+  w.querySelectorAll('[data-statut]').forEach(sel=>{
+    sel.addEventListener('click', e=>e.stopPropagation());
+    sel.addEventListener('change', e=>{
+      const d = etat.docs.find(x=>x.id===sel.dataset.statut);
+      if(d){ d.statut = sel.value; sauver(); toast(d.num + ' → ' + d.statut); }
+    });
+  });
+}
+
+function ouvrir(id){
+  const d = etat.docs.find(x=>x.id===id); if(!d) return;
+  courant = {type:d.type, id:d.id, num:d.num, lignes:JSON.parse(JSON.stringify(d.lignes))};
+  $('cliNom').value=d.client||''; $('cliTel').value=d.tel||''; $('cliAdr').value=d.adr||'';
+  $('date').value=d.date||''; $('tva').value=d.tva||18; $('remise').value=d.remise||0; $('acompte').value=d.acompte||0;
+  dessinerLignes(); calc(); basculer('edit');
+}
+
+function nouveauDoc(){
+  const rempli = courant.lignes.some(l=>l.des||l.pu) || $('cliNom').value;
+  if(rempli && !confirm('Créer un nouveau document ? Ce qui n\'est pas enregistré sera perdu.')) return;
+  nouveau('DEV'); toast('Nouveau devis prêt');
+}
+function nouveau(type){
+  courant = {type:type||'DEV', id:null, num:null, lignes:[{des:'',qte:1,pu:0}]};
+  $('cliNom').value=''; $('cliTel').value=''; $('cliAdr').value='';
+  $('date').value = new Date().toISOString().slice(0,10);
+  $('tva').value=18; $('remise').value=0; $('acompte').value=0;
+  dessinerLignes(); calc();
+}
+
+function basculer(v){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===v));
+  $('vue-edit').style.display = v==='edit'?'block':'none';
+  $('vue-reg').style.display = v==='reg'?'block':'none';
+  if(v==='reg') afficherRegistre();
+}
+
+// événements
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>basculer(t.dataset.tab)));
+$('addLine').addEventListener('click',()=>{ courant.lignes.push({des:'',qte:1,pu:0}); dessinerLignes(); });
+['tva','remise','acompte'].forEach(id=>$(id).addEventListener('input',calc));
+['socNom','socTel','socAdr','socNcc'].forEach(id=>$(id).addEventListener('input',garderSoc));
+$('btnApercu').addEventListener('click',apercu);
+$('btnSave').addEventListener('click',enregistrer);
+$('btnFact').addEventListener('click',convertir);
+$('btnNew').addEventListener('click',nouveauDoc);
+$('btnImport').addEventListener('click',()=>$('fileImport').click());
+$('fileImport').addEventListener('change',(e)=>{
+  const f = e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const d = JSON.parse(rd.result);
+      if(!d || !Array.isArray(d.docs)) throw new Error('format');
+      etat = {docs:d.docs, compteur:d.compteur || {DEV:0,FACT:0}};
+      sauver(); afficherRegistre();
+      toast('Copie restaurée : ' + d.docs.length + ' document(s)');
+    } catch(err) { toast('Fichier non reconnu'); }
+    e.target.value = '';
+  };
+  rd.readAsText(f);
+});
+$('btnExport').addEventListener('click',()=>{
+  const blob = new Blob([JSON.stringify(etat,null,1)],{type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='sauvegarde-devis-factures.json'; a.click();
+});
+$('btnReset').addEventListener('click',()=>{
+  if(confirm('Effacer tous les documents enregistrés sur cet appareil ?')){ etat={docs:[],compteur:{DEV:0,FACT:0}}; sauver(); afficherRegistre(); }
+});
+
+// démarrage
+chargerSoc();
+if(!$('date').value) $('date').value = new Date().toISOString().slice(0,10);
+dessinerLignes(); calc(); afficherRegistre();
+</script>
+</body>
+</html>
