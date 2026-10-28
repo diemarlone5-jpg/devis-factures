@@ -3,7 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Devis & Factures — Démo</title>
+<meta name="theme-color" content="#0E3B2E">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<title>Devis &amp; Factures</title>
 <style>
   :root{
     --vert:#0E3B2E; --or:#C9A227; --creme:#F6F2E7; --bord:#d9d4c6;
@@ -43,6 +47,8 @@
   .totaux div{display:flex;justify-content:space-between;padding:5px 0;font-size:14px}
   .totaux .grand{font-size:19px;font-weight:800;color:var(--vert);border-top:1px solid var(--bord);margin-top:6px;padding-top:8px}
   .hint{font-size:11.5px;color:var(--gris);margin-top:6px;line-height:1.4}
+  .fne-form{margin-top:12px;padding:10px 12px;border:1px dashed var(--bord);border-radius:10px;background:#fbf8ef}
+  .fne-form label{font-size:11.5px}
   .pill{display:inline-block;font-size:11px;padding:3px 9px;border-radius:20px;background:var(--creme);color:var(--vert);font-weight:700}
   .pill.paye{background:#e3f2e8;color:#1e6b3a}
   .pill.impaye{background:#fbeaea;color:#a33}
@@ -77,6 +83,13 @@
   #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--vert);color:#fff;
     padding:13px 20px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:90%;text-align:center}
   #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  #installBar{display:none;align-items:center;justify-content:space-between;gap:10px;background:var(--vert);color:#fff;
+    padding:11px 14px;border-radius:12px;margin:10px 14px 0;max-width:892px;margin-left:auto;margin-right:auto;font-size:13.5px;line-height:1.3}
+  #installBar button{background:var(--or);color:#17251f;border:0;border-radius:9px;padding:9px 16px;font-weight:800;font-size:13.5px;cursor:pointer;white-space:nowrap}
+  #backupBar{display:none;align-items:center;justify-content:space-between;gap:10px;background:#8a6d1f;color:#fff;
+    padding:11px 14px;border-radius:12px;margin:8px 14px 0;max-width:892px;margin-left:auto;margin-right:auto;font-size:13.5px;line-height:1.3}
+  #backupBar button{background:#fff;color:#5c4a12;border:0;border-radius:9px;padding:9px 16px;font-weight:800;font-size:13.5px;cursor:pointer;white-space:nowrap}
+  @media print{#installBar,#backupBar{display:none!important}}
   @media print{
     body{background:#fff}
     .app{display:none!important}
@@ -92,13 +105,24 @@
 </head>
 <body>
 <script>
-if(!localStorage.getItem('df_soc')){
-  localStorage.setItem('df_soc', JSON.stringify({socNom:'KOFFI BÂTIMENT & SERVICES', socTel:'07 08 12 34 56', socAdr:'Yopougon Niangon, Abidjan', socNcc:'CI-ABJ-2026-B-01472'}));
+if(!localStorage.getItem('df_demo_soc')){
+  localStorage.setItem('df_demo_soc', JSON.stringify({
+    socNom:'KOFFI BÂTIMENT & SERVICES', socTel:'07 08 12 34 56',
+    socAdr:'Yopougon Niangon, Abidjan', socNcc:'CI-ABJ-2026-B-01472'
+  }));
 }
 </script>
 
 
 <div id="toast"></div>
+<div id="installBar">
+  <span>Installez l'outil sur cet appareil pour l'ouvrir en un clic</span>
+  <button id="btnInstall">Installer</button>
+</div>
+<div id="backupBar">
+  <span id="backupTxt">Pensez à sauvegarder vos documents</span>
+  <button id="btnBackupNow">Sauvegarder</button>
+</div>
 <div class="app">
   <header class="top">
     <div class="brand">Devis &amp; Factures<small id="socLabel">Votre entreprise</small></div>
@@ -129,13 +153,14 @@ if(!localStorage.getItem('df_soc')){
     <div class="card">
       <h2>Client</h2>
       <div class="row mb">
-        <div><label>Nom du client</label><input id="cliNom" placeholder="Ex. ENTREPRISE SOTRA CI"></div>
+        <div><label>Nom du client</label><input id="cliNom" list="listeClients" placeholder="Ex. ENTREPRISE SOTRA CI"></div>
         <div><label>Téléphone</label><input id="cliTel" placeholder="05 00 00 00 00"></div>
       </div>
       <div class="row">
         <div><label>Adresse</label><input id="cliAdr" placeholder="Marcory, Abidjan"></div>
         <div><label>Date</label><input id="date" type="date"></div>
       </div>
+      <datalist id="listeClients"></datalist>
     </div>
 
     <div class="card">
@@ -145,6 +170,7 @@ if(!localStorage.getItem('df_soc')){
         <tbody id="lignes"></tbody>
       </table>
       <div class="btns"><button class="btn btn-s" id="addLine">+ Ajouter une ligne</button></div>
+      <datalist id="listePrestations"></datalist>
 
       <div class="row" style="margin-top:12px">
         <div><label>TVA</label>
@@ -152,6 +178,14 @@ if(!localStorage.getItem('df_soc')){
         </div>
         <div><label>Remise (FCFA)</label><input id="remise" type="number" value="0" min="0"></div>
         <div><label>Acompte déjà versé (FCFA)</label><input id="acompte" type="number" value="0" min="0"></div>
+      </div>
+
+      <div class="fne-form">
+        <label style="margin-bottom:6px">Facture normalisée (FNE) — à remplir après certification par la DGI</label>
+        <div class="row">
+          <div><label>N° de facture normalisée</label><input id="numFne" placeholder="Ex. 2026-00012345"></div>
+          <div><label>Référence / code de vérification</label><input id="refFne" placeholder="Ex. ABC123XYZ"></div>
+        </div>
       </div>
 
       <div class="totaux">
@@ -175,6 +209,17 @@ if(!localStorage.getItem('df_soc')){
   <section id="vue-reg" style="display:none">
     <div class="card">
       <h2>Registre des documents</h2>
+      <div class="row" style="margin-bottom:10px">
+        <div><input id="regSearch" placeholder="Rechercher un client ou un numéro…"></div>
+        <div style="max-width:190px"><select id="regStatut">
+          <option value="">Tous les statuts</option>
+          <option value="brouillon">brouillon</option>
+          <option value="envoyé">envoyé</option>
+          <option value="accepté">accepté</option>
+          <option value="payé">payé</option>
+          <option value="impayé">impayé</option>
+        </select></div>
+      </div>
       <div id="regWrap"></div>
       <div class="btns" style="margin-top:14px">
         <button class="btn btn-s" id="btnExport">Sauvegarder une copie</button>
@@ -182,7 +227,7 @@ if(!localStorage.getItem('df_soc')){
         <button class="btn btn-d" id="btnReset">Tout effacer</button>
         <input type="file" id="fileImport" accept=".json,application/json" style="display:none">
       </div>
-      <p class="hint">Cliquez sur une ligne pour rouvrir le document. Les données restent sur cet appareil.</p>
+      <p class="hint" id="backupInfo">Cliquez sur une ligne pour rouvrir le document. Les données restent sur cet appareil.</p>
     </div>
   </section>
 </div>
@@ -215,10 +260,9 @@ if(!localStorage.getItem('df_soc')){
     <div id="dResteLine" style="display:none;font-weight:700"><span>Reste à payer</span><span id="dReste"></span></div>
   </div>
 
-  <div class="fne" id="dFne">
-    <b>Mentions FNE.</b> Document à certifier sur la plateforme de la Direction Générale des Impôts avant remise au client.
-    Numéro de facture normalisée : <b>à compléter après certification</b> — Référence / QR code DGI : <b>à reporter</b>.
-  </div>
+  <div id="dLettres" style="margin-top:8px;font-size:10.5px;font-style:italic;color:#333"></div>
+
+  <div class="fne" id="dFne"></div>
 
   <div class="pied" id="dPied"></div>
 </div>
@@ -226,10 +270,19 @@ if(!localStorage.getItem('df_soc')){
 <script>
 const F = n => (Math.round(n||0)).toLocaleString('fr-FR').replace(/\u202f|\u00a0/g,' ') + ' F';
 const $ = id => document.getElementById(id);
-let etat = JSON.parse(localStorage.getItem('df_v1') || '{"docs":[],"compteur":{"DEV":0,"FACT":0}}');
+let etat = JSON.parse(localStorage.getItem('df_demo_v1') || '{"docs":[],"compteur":{"DEV":0,"FACT":0}}');
 let courant = { type:'DEV', id:null, lignes:[{des:'',qte:1,pu:0}] };
 
-function sauver(){ localStorage.setItem('df_v1', JSON.stringify(etat)); }
+function sauver(){ localStorage.setItem('df_demo_v1', JSON.stringify(etat)); }
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+function rafraichirListes(){
+  const lc = document.getElementById('listeClients');
+  const lp = document.getElementById('listePrestations');
+  if(lc) lc.innerHTML = (etat.clients||[]).map(c=>`<option value="${esc(c.nom)}">`).join('');
+  if(lp) lp.innerHTML = (etat.prestations||[]).map(p=>`<option value="${esc(p.des)}">`).join('');
+}
+
 function toast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('on');
@@ -248,13 +301,13 @@ function soc(){
   return { nom:$('socNom').value || 'VOTRE ENTREPRISE', tel:$('socTel').value, adr:$('socAdr').value, ncc:$('socNcc').value };
 }
 function chargerSoc(){
-  const s = JSON.parse(localStorage.getItem('df_soc') || '{}');
+  const s = JSON.parse(localStorage.getItem('df_demo_soc') || '{}');
   ['socNom','socTel','socAdr','socNcc'].forEach(k=>{ if(s[k]) $(k).value = s[k]; });
   $('socLabel').textContent = s.socNom || 'Votre entreprise';
 }
 function garderSoc(){
   const s = {socNom:$('socNom').value,socTel:$('socTel').value,socAdr:$('socAdr').value,socNcc:$('socNcc').value};
-  localStorage.setItem('df_soc', JSON.stringify(s));
+  localStorage.setItem('df_demo_soc', JSON.stringify(s));
   $('socLabel').textContent = s.socNom || 'Votre entreprise';
 }
 
@@ -262,7 +315,7 @@ function dessinerLignes(){
   const tb = $('lignes'); tb.innerHTML = '';
   courant.lignes.forEach((l,i)=>{
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td><input data-i="${i}" data-k="des" value="${(l.des||'').replace(/"/g,'&quot;')}" placeholder="Ex. Fourniture et pose de carreaux"></td>
+    tr.innerHTML = `<td><input data-i="${i}" data-k="des" list="listePrestations" value="${(l.des||'').replace(/"/g,'&quot;')}" placeholder="Ex. Fourniture et pose de carreaux"></td>
       <td><input data-i="${i}" data-k="qte" type="number" min="0" step="1" value="${l.qte}"></td>
       <td><input data-i="${i}" data-k="pu" type="number" min="0" step="500" value="${l.pu}"></td>
       <td class="num" id="lt${i}">${F(l.qte*l.pu)}</td>
@@ -302,6 +355,44 @@ function calc(){
   $('tReste').textContent = F(t.reste);
 }
 
+function nombreEnLettres(n){
+  n = Math.round(n || 0);
+  if (n === 0) return "zéro";
+  const u = ["", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix",
+             "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"];
+  const d = ["", "", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante", "quatre-vingt", "quatre-vingt"];
+  function sous(n){
+    if (n < 20) return u[n];
+    if (n < 100){
+      const diz = Math.floor(n/10), unit = n%10;
+      if (diz === 7 || diz === 9){
+        const base = d[diz];
+        if (unit === 0) return base + (diz === 7 ? "-dix" : "-dix");
+        if (diz === 7 && unit === 1) return "soixante et onze";
+        return base + "-" + u[10 + unit];
+      }
+      if (unit === 0) return d[diz] + (diz === 8 ? "s" : "");
+      if (unit === 1 && diz !== 8) return d[diz] + " et un";
+      return d[diz] + "-" + u[unit];
+    }
+    const cent = Math.floor(n/100), reste = n%100;
+    let tete = cent === 1 ? "cent" : u[cent] + " cent" + (reste === 0 ? "s" : "");
+    return reste ? tete + " " + sous(reste) : tete;
+  }
+  function mille(n){
+    if (n < 1000) return sous(n);
+    if (n < 1000000){
+      const m = Math.floor(n/1000), r = n%1000;
+      let t = m === 1 ? "mille" : sous(m) + " mille";
+      return r ? t + " " + sous(r) : t;
+    }
+    const mi = Math.floor(n/1000000), r = n%1000000;
+    let t = mi === 1 ? "un million" : sous(mi) + " millions";
+    return r ? t + " " + mille(r) : t;
+  }
+  return mille(n);
+}
+
 function numSuivant(type){
   etat.compteur = etat.compteur || {DEV:0,FACT:0};
   etat.compteur[type] = (etat.compteur[type]||0)+1;
@@ -332,6 +423,16 @@ function remplirDoc(){
   $('dAcompte').textContent = F(t.ac);
   $('dResteLine').style.display = t.ac>0?'flex':'none';
   $('dReste').textContent = F(t.reste);
+  const nf = ($('numFne').value || '').trim();
+  const rf = ($('refFne').value || '').trim();
+  $('dFne').innerHTML = (nf || rf)
+    ? '<b>Mentions FNE.</b> Facture normalisée n° <b>' + esc(nf || '—') + '</b>' +
+      (rf ? ' — Référence / code de vérification : <b>' + esc(rf) + '</b>' : '') + '.'
+    : '<b>Mentions FNE.</b> Document à certifier sur la plateforme de la Direction Générale des Impôts avant remise au client. ' +
+      'Numéro de facture normalisée : <b>à compléter après certification</b> — Référence / QR code DGI : <b>à reporter</b>.';
+  $('dLettres').textContent = (courant.type === 'DEV' ? 'Arrêté le présent devis à la somme de : ' : 'Arrêtée la présente facture à la somme de : ')
+    + nombreEnLettres(t.net) + ' francs CFA.';
+
   $('dPied').innerHTML = (courant.type==='DEV' ? 'Devis valable 30 jours. ' : '') +
     'Paiement par mobile money ou virement. Tout retard de paiement peut entraîner des frais de relance.<br>' +
     'Document généré par le système de devis et factures de ' + s.nom + '.';
@@ -351,27 +452,64 @@ function enregistrer(){
     client: $('cliNom').value, tel: $('cliTel').value, adr: $('cliAdr').value,
     lignes: JSON.parse(JSON.stringify(courant.lignes)), tva:+$('tva').value,
     remise:+$('remise').value, acompte:+$('acompte').value,
+    numFne: $('numFne').value, refFne: $('refFne').value,
     total: totaux().net, statut: (etat.docs.find(d=>d.id===courant.id)||{}).statut || (courant.type==='DEV'?'brouillon':'emise')
   };
   const i = etat.docs.findIndex(d=>d.id===doc.id);
   if(i>=0) etat.docs[i]=doc; else etat.docs.unshift(doc);
   courant.id = doc.id; courant.num = doc.num;
-  sauver(); afficherRegistre();
+
+  // mémoire client
+  etat.clients = etat.clients || [];
+  if (doc.client) {
+    const i = etat.clients.findIndex(c => c.nom.toLowerCase() === doc.client.toLowerCase());
+    const fiche = { nom: doc.client, tel: doc.tel, adr: doc.adr };
+    if (i >= 0) etat.clients[i] = fiche; else etat.clients.unshift(fiche);
+    etat.clients = etat.clients.slice(0, 200);
+  }
+  // mémoire prestations
+  etat.prestations = etat.prestations || [];
+  doc.lignes.forEach(l => {
+    if (!l.des) return;
+    const i = etat.prestations.findIndex(p => p.des.toLowerCase() === l.des.toLowerCase());
+    const fiche = { des: l.des, pu: l.pu };
+    if (i >= 0) etat.prestations[i] = fiche; else etat.prestations.unshift(fiche);
+  });
+  etat.prestations = etat.prestations.slice(0, 300);
+
+  sauver(); afficherRegistre(); rafraichirListes(); verifierSauvegarde();
   toast('Enregistré : ' + doc.num);
 }
 
 function afficherRegistre(){
   const w = $('regWrap');
   if(!etat.docs.length){ w.innerHTML = '<div class="vide">Aucun document enregistré pour le moment.</div>'; return; }
+  const q = (document.getElementById('regSearch')?.value || '').toLowerCase().trim();
+  const st = document.getElementById('regStatut')?.value || '';
+  const liste = etat.docs.filter(d =>
+    (!st || d.statut === st) &&
+    (!q || (d.client || '').toLowerCase().includes(q) || d.num.toLowerCase().includes(q))
+  );
+  if(!liste.length){ w.innerHTML = '<div class="vide">Aucun document ne correspond à cette recherche.</div>'; return; }
   let h = '<table class="reg"><thead><tr><th>N°</th><th>Client</th><th>Date</th><th style="text-align:right">Montant</th><th>Statut</th></tr></thead><tbody>';
   const STATUTS = ['brouillon','envoyé','accepté','payé','impayé'];
-  etat.docs.forEach(d=>{
+  liste.forEach(d=>{
     const opts = STATUTS.map(s=>`<option value="${s}"${s===d.statut?' selected':''}>${s}</option>`).join('');
     h += `<tr data-open="${d.id}"><td><b>${d.num}</b></td><td>${(d.client||'—').replace(/</g,'&lt;')}</td>
       <td>${d.date}</td><td style="text-align:right;white-space:nowrap"><b>${F(d.total)}</b></td>
       <td><select class="statut" data-statut="${d.id}">${opts}</select></td></tr>`;
   });
   w.innerHTML = h + '</tbody></table>';
+  const info = document.getElementById('backupInfo');
+  if(info){
+    const last = +localStorage.getItem('df_lastExport') || 0;
+    if(!last){ info.textContent = 'Aucune sauvegarde faite. Pensez à « Sauvegarder une copie » chaque semaine.'; }
+    else {
+      const j = Math.floor((Date.now()-last)/86400000);
+      info.textContent = (j === 0 ? "Dernière sauvegarde : aujourd'hui." : "Dernière sauvegarde : il y a " + j + " jour(s).") +
+        " Les données restent sur cet appareil.";
+    }
+  }
   w.querySelectorAll('[data-open]').forEach(tr=>tr.addEventListener('click',()=>ouvrir(tr.dataset.open)));
   w.querySelectorAll('[data-statut]').forEach(sel=>{
     sel.addEventListener('click', e=>e.stopPropagation());
@@ -387,6 +525,7 @@ function ouvrir(id){
   courant = {type:d.type, id:d.id, num:d.num, lignes:JSON.parse(JSON.stringify(d.lignes))};
   $('cliNom').value=d.client||''; $('cliTel').value=d.tel||''; $('cliAdr').value=d.adr||'';
   $('date').value=d.date||''; $('tva').value=d.tva||18; $('remise').value=d.remise||0; $('acompte').value=d.acompte||0;
+  $('numFne').value=d.numFne||''; $('refFne').value=d.refFne||'';
   dessinerLignes(); calc(); basculer('edit');
 }
 
@@ -400,6 +539,7 @@ function nouveau(type){
   $('cliNom').value=''; $('cliTel').value=''; $('cliAdr').value='';
   $('date').value = new Date().toISOString().slice(0,10);
   $('tva').value=18; $('remise').value=0; $('acompte').value=0;
+  $('numFne').value=''; $('refFne').value='';
   dessinerLignes(); calc();
 }
 
@@ -407,7 +547,7 @@ function basculer(v){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===v));
   $('vue-edit').style.display = v==='edit'?'block':'none';
   $('vue-reg').style.display = v==='reg'?'block':'none';
-  if(v==='reg') afficherRegistre();
+  if(v==='reg'){ afficherRegistre(); verifierSauvegarde(); }
 }
 
 // événements
@@ -419,6 +559,65 @@ $('btnApercu').addEventListener('click',apercu);
 $('btnSave').addEventListener('click',enregistrer);
 $('btnFact').addEventListener('click',convertir);
 $('btnNew').addEventListener('click',nouveauDoc);
+['regSearch','regStatut'].forEach(id => {
+  const el = $(id); if(el){ el.addEventListener('input', afficherRegistre); el.addEventListener('change', afficherRegistre); }
+});
+$('cliNom').addEventListener('change', (e) => {
+  const c = (etat.clients || []).find(x => x.nom.toLowerCase() === (e.target.value || '').toLowerCase());
+  if (c) { if (c.tel) $('cliTel').value = c.tel; if (c.adr) $('cliAdr').value = c.adr; }
+});
+
+// ---------- installation comme application ----------
+let promptInstalle = null;
+const barreInstall = document.getElementById('installBar');
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  promptInstalle = e;
+  barreInstall.style.display = 'flex';
+});
+document.getElementById('btnInstall').addEventListener('click', async () => {
+  if (!promptInstalle) return;
+  promptInstalle.prompt();
+  try {
+    const choix = await promptInstalle.userChoice;
+    if (choix && choix.outcome === 'accepted') {
+      barreInstall.style.display = 'none';
+      toast('Application installée');
+    }
+  } catch (err) {}
+  promptInstalle = null;
+});
+window.addEventListener('appinstalled', () => {
+  barreInstall.style.display = 'none';
+  toast('Application installée sur cet appareil');
+});
+if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
+  barreInstall.style.display = 'none';
+}
+// ---------- rappel de sauvegarde ----------
+function verifierSauvegarde(){
+  const barre = document.getElementById('backupBar');
+  if(!barre) return;
+  if(!etat.docs.length){ barre.style.display = 'none'; return; }
+  const last = +localStorage.getItem('df_lastExport') || 0;
+  const jours = last ? Math.floor((Date.now() - last) / 86400000) : 999;
+  if(jours >= 7){
+    document.getElementById('backupTxt').textContent = last
+      ? "Dernière sauvegarde : il y a " + jours + " jours. Vos documents sont sur cet appareil."
+      : "Aucune sauvegarde. Vos documents sont sur cet appareil : une copie est conseillée.";
+    barre.style.display = 'flex';
+  } else {
+    barre.style.display = 'none';
+  }
+}
+document.getElementById('btnBackupNow').addEventListener('click', () => {
+  document.getElementById('btnExport').click();
+  document.getElementById('backupBar').style.display = 'none';
+});
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
 $('btnImport').addEventListener('click',()=>$('fileImport').click());
 $('fileImport').addEventListener('change',(e)=>{
   const f = e.target.files[0]; if(!f) return;
@@ -437,6 +636,7 @@ $('fileImport').addEventListener('change',(e)=>{
 });
 $('btnExport').addEventListener('click',()=>{
   const blob = new Blob([JSON.stringify(etat,null,1)],{type:'application/json'});
+  localStorage.setItem('df_lastExport', Date.now());
   const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
   a.download='sauvegarde-devis-factures.json'; a.click();
 });
@@ -447,7 +647,7 @@ $('btnReset').addEventListener('click',()=>{
 // démarrage
 chargerSoc();
 if(!$('date').value) $('date').value = new Date().toISOString().slice(0,10);
-dessinerLignes(); calc(); afficherRegistre();
+dessinerLignes(); calc(); afficherRegistre(); rafraichirListes(); verifierSauvegarde();
 </script>
 </body>
 </html>
