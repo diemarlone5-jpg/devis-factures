@@ -86,7 +86,10 @@
   #installBar{display:none;align-items:center;justify-content:space-between;gap:10px;background:var(--vert);color:#fff;
     padding:11px 14px;border-radius:12px;margin:10px 14px 0;max-width:892px;margin-left:auto;margin-right:auto;font-size:13.5px;line-height:1.3}
   #installBar button{background:var(--or);color:#17251f;border:0;border-radius:9px;padding:9px 16px;font-weight:800;font-size:13.5px;cursor:pointer;white-space:nowrap}
-  @media print{#installBar{display:none!important}}
+  #backupBar{display:none;align-items:center;justify-content:space-between;gap:10px;background:#8a6d1f;color:#fff;
+    padding:11px 14px;border-radius:12px;margin:8px 14px 0;max-width:892px;margin-left:auto;margin-right:auto;font-size:13.5px;line-height:1.3}
+  #backupBar button{background:#fff;color:#5c4a12;border:0;border-radius:9px;padding:9px 16px;font-weight:800;font-size:13.5px;cursor:pointer;white-space:nowrap}
+  @media print{#installBar,#backupBar{display:none!important}}
   @media print{
     body{background:#fff}
     .app{display:none!important}
@@ -106,6 +109,10 @@
 <div id="installBar">
   <span>Installez l'outil sur cet appareil pour l'ouvrir en un clic</span>
   <button id="btnInstall">Installer</button>
+</div>
+<div id="backupBar">
+  <span id="backupTxt">Pensez à sauvegarder vos documents</span>
+  <button id="btnBackupNow">Sauvegarder</button>
 </div>
 <div class="app">
   <header class="top">
@@ -461,7 +468,7 @@ function enregistrer(){
   });
   etat.prestations = etat.prestations.slice(0, 300);
 
-  sauver(); afficherRegistre(); rafraichirListes();
+  sauver(); afficherRegistre(); rafraichirListes(); verifierSauvegarde();
   toast('Enregistré : ' + doc.num);
 }
 
@@ -531,7 +538,7 @@ function basculer(v){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===v));
   $('vue-edit').style.display = v==='edit'?'block':'none';
   $('vue-reg').style.display = v==='reg'?'block':'none';
-  if(v==='reg') afficherRegistre();
+  if(v==='reg'){ afficherRegistre(); verifierSauvegarde(); }
 }
 
 // événements
@@ -578,6 +585,27 @@ window.addEventListener('appinstalled', () => {
 if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
   barreInstall.style.display = 'none';
 }
+// ---------- rappel de sauvegarde ----------
+function verifierSauvegarde(){
+  const barre = document.getElementById('backupBar');
+  if(!barre) return;
+  if(!etat.docs.length){ barre.style.display = 'none'; return; }
+  const last = +localStorage.getItem('df_lastExport') || 0;
+  const jours = last ? Math.floor((Date.now() - last) / 86400000) : 999;
+  if(jours >= 7){
+    document.getElementById('backupTxt').textContent = last
+      ? "Dernière sauvegarde : il y a " + jours + " jours. Vos documents sont sur cet appareil."
+      : "Aucune sauvegarde. Vos documents sont sur cet appareil : une copie est conseillée.";
+    barre.style.display = 'flex';
+  } else {
+    barre.style.display = 'none';
+  }
+}
+document.getElementById('btnBackupNow').addEventListener('click', () => {
+  document.getElementById('btnExport').click();
+  document.getElementById('backupBar').style.display = 'none';
+});
+
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
@@ -610,7 +638,7 @@ $('btnReset').addEventListener('click',()=>{
 // démarrage
 chargerSoc();
 if(!$('date').value) $('date').value = new Date().toISOString().slice(0,10);
-dessinerLignes(); calc(); afficherRegistre(); rafraichirListes();
+dessinerLignes(); calc(); afficherRegistre(); rafraichirListes(); verifierSauvegarde();
 </script>
 </body>
 </html>
