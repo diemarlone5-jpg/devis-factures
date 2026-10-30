@@ -71,12 +71,15 @@
   /* ---------- lignes du devis ---------- */
   .lines{width:100%; border-collapse:separate; border-spacing:0 6px; margin-top:2px}
   .lines th{font-size:10px; text-transform:uppercase; letter-spacing:.8px; color:var(--gris); text-align:left; padding:0 6px 2px; font-weight:700}
-  .lines th:nth-child(2){width:72px}
-  .lines th:nth-child(3){width:124px}
-  .lines th:nth-child(4){width:112px}
-  .lines th:nth-child(5){width:42px}
+  .lines th:nth-child(2){width:70px}
+  .lines th:nth-child(3){width:120px}
+  .lines th:nth-child(4){width:76px}
+  .lines th:nth-child(5){width:112px}
+  .lines th:nth-child(6){width:42px}
   .lines td{padding:0 6px; vertical-align:middle}
   .lines input{padding:10px; font-size:14px; background:#fff}
+  .lines select{padding:9px 6px; font-size:13.5px; background:#fff}
+  .lines .lbl{display:none}
   .lines .num{text-align:right; font-weight:700; color:var(--vert); white-space:nowrap}
   .lines .del{border:1px solid #F0DCDC; background:#FDF4F4; color:var(--rouge); border-radius:9px; width:34px; height:34px; font-size:17px; cursor:pointer; transition:.15s}
   .lines .del:hover{background:#FAEAEA}
@@ -104,10 +107,22 @@
   }
   .totaux .grand span:first-child{font-size:12px; text-transform:uppercase; letter-spacing:1px; font-weight:800}
   .totaux .grand span:last-child{font-size:24px; font-weight:800; letter-spacing:-.5px}
+  /* le conteneur de detail doit rester un bloc, pas une ligne flex */
+  #tTvaDetail, #dTvaDetail{display:block !important}
+  #tTvaDetail div, #dTvaDetail div{display:flex; justify-content:space-between}
 
   .hint{font-size:11.5px; color:var(--gris); margin-top:8px; line-height:1.45}
   .fne-form{margin-top:14px; padding:12px 14px; border:1px dashed var(--bord-fort); border-radius:12px; background:#FBF9F2}
   .fne-form label{font-size:11.5px}
+
+  /* ---------- synthese du registre ---------- */
+  .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:0 0 14px}
+  .stat{background:#FBFCFA; border:1px solid var(--bord); border-radius:12px; padding:10px 12px; min-width:0}
+  .stat span{display:block; font-size:9.5px; text-transform:uppercase; letter-spacing:.7px; color:var(--gris); font-weight:700; margin-bottom:3px}
+  .stat b{display:block; font-size:16.5px; color:var(--vert); font-weight:800; letter-spacing:-.3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .stat.alerte{background:#FDF6F6; border-color:#F0DCDC}
+  .stat.alerte b{color:var(--rouge)}
+  .ret{font-size:10.5px; color:var(--rouge); font-weight:700; margin-top:2px}
 
   /* ---------- statuts ---------- */
   .pill{display:inline-block; font-size:11px; padding:4px 10px; border-radius:20px; background:var(--creme); color:var(--vert); font-weight:700}
@@ -188,17 +203,23 @@
     .tab{padding:8px 12px; font-size:13px}
     .totaux .grand span:last-child{font-size:21px}
     .btns .btn{min-width:100%}
-    .lines{table-layout:fixed}
-    .lines th{font-size:8.5px; letter-spacing:.3px; padding:0 2px 2px}
-    .lines th:nth-child(1){width:40%}
-    .lines th:nth-child(2){width:13%}
-    .lines th:nth-child(3){width:21%}
-    .lines th:nth-child(4){width:16%}
-    .lines th:nth-child(5){width:10%}
-    .lines td{padding:0 2px}
-    .lines input{padding:9px 6px; font-size:13px}
+    /* lignes : une carte par prestation, champs plus larges */
+    .lines, .lines tbody, .lines td{display:block; width:auto}
+    .lines thead{display:none}
+    .lines tr{display:flex; flex-wrap:wrap; gap:6px 8px; align-items:flex-end;
+      background:#fff; border:1px solid var(--bord); border-radius:12px; padding:10px; margin-bottom:8px; position:relative}
+    .lines td{padding:0; min-width:0; border:0}
+    .lines td:nth-child(1){flex:1 1 100%; padding-right:36px}
+    .lines td:nth-child(2){flex:1 1 16%}
+    .lines td:nth-child(3){flex:1 1 30%}
+    .lines td:nth-child(4){flex:1 1 20%}
+    .lines td:nth-child(5){flex:1 1 100%; display:flex; justify-content:space-between; align-items:baseline;
+      border-top:1px dashed var(--bord-fort); padding-top:7px; margin-top:3px}
+    .lines td:nth-child(6){position:absolute; top:8px; right:8px; width:auto}
+    .lines .lbl{display:block; font-size:9px; text-transform:uppercase; letter-spacing:.5px; color:var(--gris); font-weight:700; margin-bottom:2px}
+    .lines input, .lines select{padding:9px 8px; font-size:14px}
     .lines td:nth-child(2) input, .lines td:nth-child(3) input{text-align:right}
-    .lines .num{font-size:12.5px}
+    .lines .num{font-size:15px; font-weight:800}
 
     /* registre : une carte par document, plus de colonnes ecrasees */
     table.reg{display:block}
@@ -215,6 +236,9 @@
     table.reg td:nth-child(5){order:5; width:100%; margin-top:6px}
     table.reg td:nth-child(5) select{width:100%}
     table.reg td.sup{position:absolute; top:10px; right:10px; width:auto}
+
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .stat b{font-size:15px}
   }
 </style>
 </head>
@@ -265,6 +289,7 @@
       <div class="row">
         <div><label>Adresse</label><input id="cliAdr" placeholder="Marcory, Abidjan"></div>
         <div><label>Date</label><input id="date" type="date"></div>
+        <div><label>Échéance de paiement</label><input id="echeance" type="date"></div>
       </div>
       <datalist id="listeClients"></datalist>
     </div>
@@ -272,14 +297,14 @@
     <div class="card">
       <h2>Prestations / produits</h2>
       <table class="lines">
-        <thead><tr><th>Prestation</th><th>Qté</th><th>Prix unit.</th><th class="num">Total</th><th></th></tr></thead>
+        <thead><tr><th>Prestation</th><th>Qté</th><th>Prix unit.</th><th>TVA</th><th class="num">Total</th><th></th></tr></thead>
         <tbody id="lignes"></tbody>
       </table>
       <div class="btns"><button class="btn btn-s" id="addLine">+ Ajouter une ligne</button></div>
       <datalist id="listePrestations"></datalist>
 
       <div class="row" style="margin-top:12px">
-        <div><label>TVA</label>
+        <div><label>Appliquer une TVA à toutes les lignes</label>
           <select id="tva"><option value="18">18 %</option><option value="9">9 %</option><option value="0">Exonéré</option></select>
         </div>
         <div><label>Remise (FCFA)</label><input id="remise" type="number" value="0" min="0"></div>
@@ -296,7 +321,8 @@
 
       <div class="totaux">
         <div><span>Sous-total</span><b id="tSous">0 F</b></div>
-        <div><span>TVA</span><b id="tTva">0 F</b></div>
+        <div id="tTvaDetail"></div>
+        <div><span>TVA <span id="tTvaLbl"></span></span><b id="tTva">0 F</b></div>
         <div><span>Remise</span><b id="tRem">0 F</b></div>
         <div class="grand"><span>Net à payer</span><span id="tNet">0 F</span></div>
         <div id="ligneAcompte" style="display:none"><span>Reste à payer</span><b id="tReste">0 F</b></div>
@@ -315,11 +341,13 @@
   <section id="vue-reg" style="display:none">
     <div class="card">
       <h2>Registre des documents</h2>
+      <div id="synthese" class="stats"></div>
       <div class="row" style="margin-bottom:10px">
         <div><input id="regSearch" placeholder="Rechercher un client ou un numéro…"></div>
         <div style="max-width:190px"><select id="regStatut">
           <option value="">Tous les statuts</option>
           <option value="brouillon">brouillon</option>
+          <option value="émise">émise</option>
           <option value="envoyé">envoyé</option>
           <option value="accepté">accepté</option>
           <option value="payé">payé</option>
@@ -344,7 +372,7 @@
     <div class="soc"><span id="dSoc">VOTRE ENTREPRISE</span>
       <small id="dSocInfo"></small>
     </div>
-    <div class="type"><b id="dType">DEVIS</b><span id="dNum">DEV-2026-0001</span><span id="dDate"></span></div>
+    <div class="type"><b id="dType">DEVIS</b><span id="dNum">DEV-2026-0001</span><span id="dDate"></span><span id="dRefDevis"></span><span id="dEch"></span></div>
   </div>
 
   <div class="parties">
@@ -359,6 +387,7 @@
 
   <div class="tot">
     <div><span>Sous-total</span><span id="dSous"></span></div>
+    <div id="dTvaDetail"></div>
     <div><span>TVA <span id="dTvaTxt"></span></span><span id="dTva"></span></div>
     <div><span>Remise</span><span id="dRem"></span></div>
     <div class="g"><span>Net à payer</span><span id="dNet"></span></div>
@@ -389,6 +418,12 @@ function normaliserEtat(){
   if(typeof etat.compteur.DEV !== 'number') etat.compteur.DEV = 0;
   if(typeof etat.compteur.FACT !== 'number') etat.compteur.FACT = 0;
   if(typeof etat.compteurAnnee !== 'number') etat.compteurAnnee = new Date().getFullYear();
+  etat.docs.forEach(d=>{
+    if(d.statut === 'emise') d.statut = 'émise';
+    if(!Array.isArray(d.lignes)) d.lignes = [];
+    d.lignes.forEach(l=>{ if(l.tva == null) l.tva = (d.tva != null ? +d.tva : 18); });
+    if(typeof d.total !== 'number') d.total = 0;
+  });
 }
 function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
@@ -404,13 +439,30 @@ function toast(msg){
   t.textContent = msg; t.classList.add('on');
   clearTimeout(window.__tt); window.__tt = setTimeout(()=>t.classList.remove('on'), 2600);
 }
+function plusJours(dateStr, n){
+  const d = dateStr ? new Date(dateStr+'T12:00:00') : new Date();
+  d.setDate(d.getDate()+n);
+  const p = x => String(x).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
+
 function convertir(){
   if(courant.type !== 'DEV'){ toast('Ce document est déjà une facture.'); return; }
   if(!courant.lignes.some(l=>l.des||l.pu)){ toast('Ajoutez au moins une ligne avant de convertir.'); return; }
-  const d = $('date').value; 
-  courant = {type:'FACT', id:null, num:null, lignes:JSON.parse(JSON.stringify(courant.lignes))};
-  if(d) $('date').value = d;
-  remplirDoc(); enregistrer(); toast('Facture créée : ' + courant.num);
+  const devisAffiche = courant.num || prochainNumero('DEV');
+  if(!confirm('Créer une facture à partir du devis ' + devisAffiche + ' ?\nLe devis passera en « accepté ».')) return;
+
+  if(!courant.id) enregistrer();            // le devis doit exister pour être référencé
+  const devisNum = courant.num;
+  const dev = etat.docs.find(x=>x.id===courant.id);
+  if(dev) dev.statut = 'accepté';
+
+  courant = {type:'FACT', id:null, num:null, refDevis:devisNum, lignes:JSON.parse(JSON.stringify(courant.lignes))};
+  $('date').value = plusJours(null, 0);       // la facture est datée du jour d'émission
+  $('echeance').value = plusJours($('date').value, 30);
+  sauver();
+  remplirDoc(); enregistrer();
+  toast('Facture ' + courant.num + ' créée depuis ' + devisNum);
 }
 
 function soc(){
@@ -427,19 +479,28 @@ function garderSoc(){
   $('socLabel').textContent = s.socNom || 'Votre entreprise';
 }
 
+function tauxOptions(sel){
+  return [[18,'18 %'],[9,'9 %'],[0,'Exonéré']]
+    .map(([v,t]) => `<option value="${v}"${+sel===v?' selected':''}>${t}</option>`).join('');
+}
+
 function dessinerLignes(){
   const tb = $('lignes'); tb.innerHTML = '';
+  const defaut = parseFloat($('tva').value) || 0;
   courant.lignes.forEach((l,i)=>{
+    if(l.tva == null) l.tva = defaut;
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td><input data-i="${i}" data-k="des" list="listePrestations" value="${(l.des||'').replace(/"/g,'&quot;')}" placeholder="Ex. Fourniture et pose de carreaux"></td>
-      <td><input data-i="${i}" data-k="qte" type="number" min="0" step="1" value="${l.qte}"></td>
-      <td><input data-i="${i}" data-k="pu" type="number" min="0" step="500" value="${l.pu}"></td>
-      <td class="num" id="lt${i}">${F(l.qte*l.pu)}</td>
-      <td><button class="del" data-del="${i}">×</button></td>`;
+    tr.innerHTML = `<td><span class="lbl">Désignation</span><input data-i="${i}" data-k="des" list="listePrestations" value="${(l.des||'').replace(/"/g,'&quot;')}" placeholder="Ex. Fourniture et pose de carreaux"></td>
+      <td><span class="lbl">Qté</span><input data-i="${i}" data-k="qte" type="number" min="0" step="1" value="${l.qte}"></td>
+      <td><span class="lbl">Prix unit.</span><input data-i="${i}" data-k="pu" type="number" min="0" step="500" value="${l.pu}"></td>
+      <td><span class="lbl">TVA</span><select data-i="${i}" data-k="tva" aria-label="TVA de cette ligne">${tauxOptions(l.tva)}</select></td>
+      <td class="num"><span class="lbl">Total</span><span id="lt${i}">${F(l.qte*l.pu)}</span></td>
+      <td><button class="del" data-del="${i}" aria-label="Retirer cette ligne">×</button></td>`;
     tb.appendChild(tr);
   });
-  tb.querySelectorAll('input').forEach(inp=>{
-    inp.addEventListener('input', e=>{
+  tb.querySelectorAll('input,select').forEach(inp=>{
+    const evt = inp.tagName === 'SELECT' ? 'change' : 'input';
+    inp.addEventListener(evt, e=>{
       const i = +e.target.dataset.i, k = e.target.dataset.k;
       courant.lignes[i][k] = (k==='des') ? e.target.value : (parseFloat(e.target.value)||0);
       $('lt'+i).textContent = F(courant.lignes[i].qte*courant.lignes[i].pu);
@@ -454,16 +515,33 @@ function dessinerLignes(){
 
 function totaux(){
   const sous = courant.lignes.reduce((s,l)=>s + (l.qte||0)*(l.pu||0),0);
-  const tx = parseFloat($('tva').value)||0;
-  const tva = sous*tx/100;
+  const defaut = parseFloat($('tva').value) || 0;
+  const parTaux = {};
+  courant.lignes.forEach(l=>{
+    const taux = (l.tva != null) ? +l.tva : defaut;
+    const base = (l.qte||0)*(l.pu||0);
+    if(!base) return;
+    parTaux[taux] = (parTaux[taux]||0) + base*taux/100;
+  });
+  const tva = Object.keys(parTaux).reduce((s,k)=>s+parTaux[k],0);
   const rem = parseFloat($('remise').value)||0;
   const net = Math.max(0, sous + tva - rem);
   const ac = parseFloat($('acompte').value)||0;
-  return {sous,tx,tva,rem,net,ac,reste:Math.max(0,net-ac)};
+  return {sous, tva, parTaux, rem, net, ac, reste:Math.max(0,net-ac)};
 }
+
+/* detail de TVA : une ligne par taux des qu'il y en a plusieurs */
 function calc(){
   const t = totaux();
   $('tSous').textContent = F(t.sous);
+  const taux = Object.keys(t.parTaux).map(Number).filter(k=>k>0 && Math.round(t.parTaux[k])>0).sort((a,b)=>b-a);
+  if(taux.length > 1){
+    $('tTvaDetail').innerHTML = taux.map(k=>`<div><span>TVA ${k} %</span><b>${F(t.parTaux[k])}</b></div>`).join('');
+    $('tTvaLbl').textContent = '(total)';
+  } else {
+    $('tTvaDetail').innerHTML = '';
+    $('tTvaLbl').textContent = taux.length ? '('+taux[0]+' %)' : '';
+  }
   $('tTva').textContent = F(t.tva);
   $('tRem').textContent = F(t.rem);
   $('tNet').textContent = F(t.net);
@@ -557,13 +635,24 @@ function remplirDoc(){
   $('dNum').textContent = num;
   const d = $('date').value ? new Date($('date').value+'T12:00:00') : new Date();
   $('dDate').textContent = d.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+  $('dRefDevis').textContent = (courant.type === 'FACT' && courant.refDevis) ? 'Réf. devis : ' + courant.refDevis : '';
+  const ech = $('echeance').value;
+  $('dEch').textContent = (courant.type === 'FACT' && ech)
+    ? 'Échéance : ' + new Date(ech+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}) : '';
   $('dEmetteur').innerHTML = [s.nom, s.adr, s.tel, s.ncc].filter(Boolean).join('<br>');
   $('dClient').innerHTML = [$('cliNom').value||'—', $('cliAdr').value, $('cliTel').value].filter(Boolean).join('<br>');
   $('dLignes').innerHTML = courant.lignes.filter(l=>l.des||l.pu).map(l=>
     `<tr><td>${(l.des||'').replace(/</g,'&lt;')}</td><td class="n">${l.qte}</td><td class="n">${F(l.pu)}</td><td class="n">${F(l.qte*l.pu)}</td></tr>`
   ).join('');
   $('dSous').textContent = F(t.sous);
-  $('dTvaTxt').textContent = t.tx ? '('+t.tx+' %)' : '';
+  const tauxDoc = Object.keys(t.parTaux).map(Number).filter(k=>k>0 && Math.round(t.parTaux[k])>0).sort((a,b)=>b-a);
+  if(tauxDoc.length > 1){
+    $('dTvaDetail').innerHTML = tauxDoc.map(k=>`<div><span>TVA ${k} %</span><span>${F(t.parTaux[k])}</span></div>`).join('');
+    $('dTvaTxt').textContent = '(total)';
+  } else {
+    $('dTvaDetail').innerHTML = '';
+    $('dTvaTxt').textContent = tauxDoc.length ? '('+tauxDoc[0]+' %)' : '';
+  }
   $('dTva').textContent = F(t.tva);
   $('dRem').textContent = F(t.rem);
   $('dNet').textContent = F(t.net);
@@ -581,7 +670,10 @@ function remplirDoc(){
   $('dLettres').textContent = (courant.type === 'DEV' ? 'Arrêté le présent devis à la somme de : ' : 'Arrêtée la présente facture à la somme de : ')
     + nombreEnLettres(t.net) + ' francs CFA.';
 
-  $('dPied').innerHTML = (courant.type==='DEV' ? 'Devis valable 30 jours. ' : '') +
+  const paiement = (courant.type === 'DEV')
+    ? 'Devis valable 30 jours à compter de sa date. '
+    : (ech ? 'Paiement à échéance du ' + new Date(ech+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}) + '. ' : 'Paiement à réception. ');
+  $('dPied').innerHTML = paiement +
     'Paiement par mobile money ou virement. Tout retard de paiement peut entraîner des frais de relance.<br>' +
     'Document généré par le système de devis et factures de ' + s.nom + '.';
 }
@@ -595,15 +687,18 @@ function enregistrer(){
   const dejaEnBase = !!(courant.id && etat.docs.some(d => d.id === courant.id));
   if (!dejaEnBase) courant.num = allouerNumero(courant.type);
   remplirDoc();
+  calc();
   const doc = {
     id: courant.id || (Date.now()+''+Math.floor(Math.random()*99)),
     type: courant.type, num: courant.num,
     date: $('date').value || new Date().toISOString().slice(0,10),
+    echeance: $('echeance').value || '',
+    refDevis: courant.refDevis || '',
     client: $('cliNom').value, tel: $('cliTel').value, adr: $('cliAdr').value,
     lignes: JSON.parse(JSON.stringify(courant.lignes)), tva:+$('tva').value,
     remise:+$('remise').value, acompte:+$('acompte').value,
     numFne: $('numFne').value, refFne: $('refFne').value,
-    total: totaux().net, statut: (etat.docs.find(d=>d.id===courant.id)||{}).statut || (courant.type==='DEV'?'brouillon':'emise')
+    total: totaux().net, statut: (etat.docs.find(d=>d.id===courant.id)||{}).statut || (courant.type==='DEV'?'brouillon':'émise')
   };
   const i = etat.docs.findIndex(d=>d.id===doc.id);
   if(i>=0) etat.docs[i]=doc; else etat.docs.unshift(doc);
@@ -631,8 +726,40 @@ function enregistrer(){
   toast('Enregistré : ' + doc.num);
 }
 
+function joursRetard(d){
+  if(d.type !== 'FACT' || d.statut === 'payé' || !d.echeance) return 0;
+  const e = new Date(d.echeance+'T00:00:00');
+  if(isNaN(e.getTime())) return 0;
+  const j = Math.floor((Date.now() - e.getTime()) / 86400000);
+  return j > 0 ? j : 0;
+}
+
+function afficherSynthese(){
+  const el = $('synthese'); if(!el) return;
+  const now = new Date(), m = now.getMonth(), a = now.getFullYear();
+  const dansMois = d => {
+    if(!d.date) return false;
+    const x = new Date(d.date+'T12:00:00');
+    return x.getMonth() === m && x.getFullYear() === a;
+  };
+  const factures = etat.docs.filter(d=>d.type==='FACT' && d.statut!=='brouillon');
+  const ca = factures.filter(dansMois).reduce((s,d)=>s+(d.total||0),0);
+  const encaisse = factures.filter(d=>d.statut==='payé' && dansMois(d)).reduce((s,d)=>s+(d.total||0),0);
+  const nonPayees = factures.filter(d=>d.statut!=='payé');
+  const impaye = nonPayees.reduce((s,d)=>s+(d.total||0),0);
+  const retard = nonPayees.filter(d=>joursRetard(d)>0).length;
+  const devisAttente = etat.docs.filter(d=>d.type==='DEV' && (d.statut==='brouillon'||d.statut==='envoyé'))
+    .reduce((s,d)=>s+(d.total||0),0);
+  el.innerHTML = `
+    <div class="stat"><span>CA du mois</span><b>${F(ca)}</b></div>
+    <div class="stat"><span>Encaissé ce mois</span><b>${F(encaisse)}</b></div>
+    <div class="stat${retard?' alerte':''}"><span>Impayés${retard?' · '+retard+' en retard':''}</span><b>${F(impaye)}</b></div>
+    <div class="stat"><span>Devis en attente</span><b>${F(devisAttente)}</b></div>`;
+}
+
 function afficherRegistre(){
   const w = $('regWrap');
+  afficherSynthese();
   if(!etat.docs.length){ w.innerHTML = '<div class="vide">Aucun document enregistré pour le moment.</div>'; return; }
   const q = (document.getElementById('regSearch')?.value || '').toLowerCase().trim();
   const st = document.getElementById('regStatut')?.value || '';
@@ -642,11 +769,12 @@ function afficherRegistre(){
   );
   if(!liste.length){ w.innerHTML = '<div class="vide">Aucun document ne correspond à cette recherche.</div>'; return; }
   let h = '<table class="reg"><thead><tr><th>N°</th><th>Client</th><th>Date</th><th style="text-align:right">Montant</th><th>Statut</th><th></th></tr></thead><tbody>';
-  const STATUTS = ['brouillon','envoyé','accepté','payé','impayé'];
+  const STATUTS = ['brouillon','émise','envoyé','accepté','payé','impayé'];
   liste.forEach(d=>{
     const opts = STATUTS.map(s=>`<option value="${s}"${s===d.statut?' selected':''}>${s}</option>`).join('');
+    const jr = joursRetard(d);
     h += `<tr data-open="${d.id}"><td><b>${d.num}</b></td><td>${(d.client||'—').replace(/</g,'&lt;')}</td>
-      <td>${d.date}</td><td style="text-align:right;white-space:nowrap"><b>${F(d.total)}</b></td>
+      <td>${d.date}</td><td style="text-align:right;white-space:nowrap"><b>${F(d.total)}</b>${jr?'<div class="ret">'+jr+' j de retard</div>':''}</td>
       <td><select class="statut" data-statut="${d.id}">${opts}</select></td>
       <td class="sup"><button class="del-doc" data-suppr="${d.id}" title="Supprimer ce document" aria-label="Supprimer ${d.num}">×</button></td></tr>`;
   });
@@ -684,9 +812,11 @@ function afficherRegistre(){
 
 function ouvrir(id){
   const d = etat.docs.find(x=>x.id===id); if(!d) return;
-  courant = {type:d.type, id:d.id, num:d.num, lignes:JSON.parse(JSON.stringify(d.lignes))};
+  d.lignes.forEach(l=>{ if(l.tva == null) l.tva = (d.tva != null ? +d.tva : 18); });
+  courant = {type:d.type, id:d.id, num:d.num, refDevis:d.refDevis||null, lignes:JSON.parse(JSON.stringify(d.lignes))};
   $('cliNom').value=d.client||''; $('cliTel').value=d.tel||''; $('cliAdr').value=d.adr||'';
-  $('date').value=d.date||''; $('tva').value=d.tva||18; $('remise').value=d.remise||0; $('acompte').value=d.acompte||0;
+  $('date').value=d.date||''; $('echeance').value=d.echeance||'';
+  $('tva').value=d.tva||18; $('remise').value=d.remise||0; $('acompte').value=d.acompte||0;
   $('numFne').value=d.numFne||''; $('refFne').value=d.refFne||'';
   dessinerLignes(); calc(); basculer('edit');
 }
@@ -697,9 +827,10 @@ function nouveauDoc(){
   nouveau('DEV'); toast('Nouveau devis prêt');
 }
 function nouveau(type){
-  courant = {type:type||'DEV', id:null, num:null, lignes:[{des:'',qte:1,pu:0}]};
+  courant = {type:type||'DEV', id:null, num:null, refDevis:null, lignes:[{des:'',qte:1,pu:0,tva:18}]};
   $('cliNom').value=''; $('cliTel').value=''; $('cliAdr').value='';
   $('date').value = new Date().toISOString().slice(0,10);
+  $('echeance').value='';
   $('tva').value=18; $('remise').value=0; $('acompte').value=0;
   $('numFne').value=''; $('refFne').value='';
   dessinerLignes(); calc();
@@ -714,8 +845,13 @@ function basculer(v){
 
 // événements
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>basculer(t.dataset.tab)));
-$('addLine').addEventListener('click',()=>{ courant.lignes.push({des:'',qte:1,pu:0}); dessinerLignes(); });
+$('addLine').addEventListener('click',()=>{ courant.lignes.push({des:'',qte:1,pu:0,tva:(parseFloat($('tva').value)||0)}); dessinerLignes(); calc(); });
 ['tva','remise','acompte'].forEach(id=>$(id).addEventListener('input',calc));
+$('tva').addEventListener('change', ()=>{
+  const v = parseFloat($('tva').value)||0;
+  courant.lignes.forEach(l=>l.tva = v);
+  dessinerLignes(); calc();
+});
 ['socNom','socTel','socAdr','socNcc'].forEach(id=>$(id).addEventListener('input',garderSoc));
 $('btnApercu').addEventListener('click',apercu);
 $('btnSave').addEventListener('click',enregistrer);
