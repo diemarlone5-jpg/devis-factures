@@ -139,6 +139,9 @@
   .cli .du{font-weight:800; color:var(--vert); font-size:15.5px}
   .cli .du.alerte{color:var(--rouge)}
   .cli .du span{display:block; font-size:9px; text-transform:uppercase; letter-spacing:.6px; color:var(--gris); font-weight:700}
+  .cli .relance{margin-left:10px; flex:0 0 auto; background:#E6F6EC; color:#1E6B3A; border:1px solid #BFE3CC;
+    border-radius:10px; padding:9px 12px; font-size:12.5px; font-weight:700; cursor:pointer; white-space:nowrap}
+  .cli .relance:hover{background:#D9F0E2}
 
   /* ---------- statuts ---------- */
   .pill{display:inline-block; font-size:11px; padding:4px 10px; border-radius:20px; background:var(--creme); color:var(--vert); font-weight:700}
@@ -398,6 +401,7 @@
       <div class="btns" style="margin-top:14px">
         <button class="btn btn-s" id="btnExport">Sauvegarder une copie</button>
         <button class="btn btn-s" id="btnImport">Restaurer une copie</button>
+        <button class="btn btn-s" id="btnCsv">Export comptable (CSV)</button>
         <button class="btn btn-d" id="btnReset">Tout effacer</button>
         <input type="file" id="fileImport" accept=".json,application/json" style="display:none">
       </div>
@@ -586,6 +590,20 @@ function totaux(){
   const net = Math.max(0, brut - rem);
   const ac = parseFloat($('acompte').value)||0;
   return {sous, tva, parTaux, rem, remType, remVal, net, ac, reste:Math.max(0,net-ac)};
+}
+
+/* totaux recalcules depuis un document enregistre */
+function calcDoc(d){
+  let ht = 0, tva = 0;
+  (d.lignes||[]).forEach(l=>{
+    const base = (l.qte||0)*(l.pu||0);
+    ht += base;
+    tva += base * ((l.tva != null ? +l.tva : (d.tva||0))/100);
+  });
+  const brut = ht + tva;
+  const rem = d.remiseType === 'pct' ? brut*(d.remise||0)/100 : (d.remise||0);
+  const net = Math.max(0, brut - rem);
+  return {ht, tva, rem, net, reste: Math.max(0, net - (d.acompte||0))};
 }
 
 /* detail de TVA : une ligne par taux des qu'il y en a plusieurs */
@@ -904,6 +922,78 @@ function nouveau(type){
   dessinerLignes(); calc();
 }
 
+/* ---------- relances par WhatsApp ---------- */
+function telInternational(tel){
+  const d = String(tel||'').replace(/\D/g,'');
+  if(!d) return '';
+  if(d.startsWith('225')) return d;
+  if(d.length === 10 || d.length === 8) return '225' + d;   // Côte d'Ivoire
+  return d;
+}
+
+function messageRelance(nom, docs, s){
+  const total = docs.reduce((x,d)=>x+(d.total||0),0);
+  const lignes = docs.map(d=>{
+    const j = joursRetard(d);
+    const ech = d.echeance ? new Date(d.echeance+'T12:00:00').toLocaleDateString('fr-FR') : 'non échue';
+    return '• ' + d.num + ' — ' + F(d.total) + ' — échéance ' + ech + (j ? ' (' + j + ' jours de retard)' : '');
+  }).join('\n');
+  return 'Bonjour ' + nom + ',\n\n' +
+    (docs.length > 1
+      ? 'Sauf erreur de notre part, ' + docs.length + ' factures restent impayées'
+      : 'Sauf erreur de notre part, la facture suivante reste impayée') +
+    ' :\n\n' + lignes + '\n\nTotal dû : ' + F(total) + '.' +
+    (s.paiement ? '\nRèglement : ' + s.paiement + '.' : '') +
+    '\n\nMerci de votre compréhension.\n' + (s.nom || '') + (s.tel ? ' — ' + s.tel : '');
+}
+
+function relancer(nom){
+  const docs = etat.docs.filter(d => d.type === 'FACT' && d.statut !== 'payé' &&
+    (d.client||'').trim().toLowerCase() === String(nom).toLowerCase());
+  if(!docs.length){ toast('Aucune facture impayée pour ce client.'); return; }
+  const s = soc();
+  const avecTel = docs.find(d => d.tel);
+  const tel = telInternational(avecTel ? avecTel.tel : '');
+  const url = 'https://wa.me/' + tel + '?text=' + encodeURIComponent(messageRelance(nom, docs, s));
+  window.open(url, '_blank');
+  toast('Message prêt dans WhatsApp');
+}
+
+/* ---------- export comptable ---------- */
+function csvContenu(){
+  const NL = String.fromCharCode(13, 10);
+  const LF = String.fromCharCode(10);
+  const CR = String.fromCharCode(13);
+  const BOM = String.fromCharCode(0xFEFF);
+  const cellule = v => {
+    const x = String(v==null ? '' : v);
+    const doit = x.indexOf(';') >= 0 || x.indexOf('"') >= 0 || x.indexOf(LF) >= 0 || x.indexOf(CR) >= 0;
+    return doit ? '"' + x.replace(/"/g,'""') + '"' : x;
+  };
+  const entetes = ['Numéro','Type','Date','Échéance','Client','Statut','Total HT','TVA','Remise','Net à payer','Acompte','Reste à payer','N° FNE','Réf. FNE'];
+  const tries = etat.docs.slice().sort((a,b)=> (a.date||'').localeCompare(b.date||'') || (a.num||'').localeCompare(b.num||''));
+  const lignes = tries.map(d=>{
+    const t = calcDoc(d);
+    return [d.num, d.type === 'DEV' ? 'Devis' : 'Facture', d.date||'', d.echeance||'', d.client||'', d.statut||'',
+      Math.round(t.ht), Math.round(t.tva), Math.round(t.rem), Math.round(t.net),
+      Math.round(d.acompte||0), Math.round(t.reste), d.numFne||'', d.refFne||''].map(cellule).join(';');
+  });
+  const tot = tries.reduce((a,d)=>{ const t = calcDoc(d); a.ht+=t.ht; a.tva+=t.tva; a.rem+=t.rem; a.net+=t.net; return a; }, {ht:0,tva:0,rem:0,net:0});
+  lignes.push(['','','','','','TOTAUX', Math.round(tot.ht), Math.round(tot.tva), Math.round(tot.rem), Math.round(tot.net),'','','',''].map(cellule).join(';'));
+  return BOM + entetes.join(';') + NL + lignes.join(NL) + NL;
+}
+
+function exporterCsv(){
+  const csv = csvContenu();
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'comptabilite-devis-factures-' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  toast('Export : ' + etat.docs.length + ' document(s)');
+}
+
 function clientsAgreges(){
   const map = new Map();
   etat.docs.forEach(d=>{
@@ -942,10 +1032,15 @@ function afficherClients(){
         <div class="du${c.du>0?' alerte':''}">${F(c.du)}<span>dû</span></div>
         <div class="meta">${F(c.facture)} facturé</div>
       </div>
+      ${c.du>0 ? `<button class="relance" data-relance="${esc(c.nom).replace(/"/g,'&quot;')}">Relancer</button>` : ''}
     </div>`).join('');
   w.querySelectorAll('[data-cli]').forEach(el=>el.addEventListener('click', ()=>{
     $('regSearch').value = el.dataset.cli;
     basculer('reg');
+  }));
+  w.querySelectorAll('[data-relance]').forEach(b=>b.addEventListener('click', e=>{
+    e.stopPropagation();
+    relancer(b.dataset.relance);
   }));
 }
 
@@ -977,6 +1072,7 @@ $('btnNew').addEventListener('click',nouveauDoc);
   const el = $(id); if(el){ el.addEventListener('input', afficherRegistre); el.addEventListener('change', afficherRegistre); }
 });
 $('cliSearch').addEventListener('input', afficherClients);
+$('btnCsv').addEventListener('click', exporterCsv);
 $('cliNom').addEventListener('change', (e) => {
   const c = (etat.clients || []).find(x => x.nom.toLowerCase() === (e.target.value || '').toLowerCase());
   if (c) { if (c.tel) $('cliTel').value = c.tel; if (c.adr) $('cliAdr').value = c.adr; }
