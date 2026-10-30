@@ -124,6 +124,9 @@
   table.reg tbody tr:hover{background:#F8FAF7}
   table.reg tr{cursor:pointer}
   table.reg select{border:1px solid var(--bord); border-radius:20px; padding:5px 9px; font-size:12px; background:#fff; color:var(--vert); font-weight:700}
+  table.reg td.sup{text-align:right; width:38px}
+  .del-doc{border:1px solid #F0DCDC; background:#FDF4F4; color:var(--rouge); border-radius:9px; width:30px; height:30px; font-size:16px; line-height:1; cursor:pointer; transition:.15s}
+  .del-doc:hover{background:#FAEAEA; border-color:#E3C3C3}
   .vide{display:flex; flex-direction:column; align-items:center; gap:8px; color:var(--gris); text-align:center; padding:34px 12px; font-size:13.5px}
   .vide::before{content:""; width:42px; height:52px; border:2px dashed var(--bord-fort); border-radius:8px}
 
@@ -196,6 +199,22 @@
     .lines input{padding:9px 6px; font-size:13px}
     .lines td:nth-child(2) input, .lines td:nth-child(3) input{text-align:right}
     .lines .num{font-size:12.5px}
+
+    /* registre : une carte par document, plus de colonnes ecrasees */
+    table.reg{display:block}
+    table.reg thead{display:none}
+    table.reg tbody{display:block}
+    table.reg tr{display:flex; flex-wrap:wrap; align-items:center; gap:2px 10px;
+      background:#fff; border:1px solid var(--bord); border-radius:12px;
+      padding:10px 12px; margin-bottom:8px; position:relative; box-shadow:var(--ombre)}
+    table.reg td{display:block; border:0; padding:0}
+    table.reg td:nth-child(1){order:1; width:100%; padding-right:40px; font-size:11px; color:var(--gris); letter-spacing:.3px}
+    table.reg td:nth-child(2){order:2; width:100%; font-weight:700; font-size:14.5px}
+    table.reg td:nth-child(3){order:3; font-size:12px; color:var(--gris)}
+    table.reg td:nth-child(4){order:4; margin-left:auto; font-size:15.5px; font-weight:800; color:var(--vert); text-align:right!important}
+    table.reg td:nth-child(5){order:5; width:100%; margin-top:6px}
+    table.reg td:nth-child(5) select{width:100%}
+    table.reg td.sup{position:absolute; top:10px; right:10px; width:auto}
   }
 </style>
 </head>
@@ -361,6 +380,16 @@ let etat = JSON.parse(localStorage.getItem('df_v1') || '{"docs":[],"compteur":{"
 let courant = { type:'DEV', id:null, lignes:[{des:'',qte:1,pu:0}] };
 
 function sauver(){ localStorage.setItem('df_v1', JSON.stringify(etat)); }
+
+/* remet l'etat en forme apres une mise a jour ou une restauration ancienne */
+function normaliserEtat(){
+  if(!etat || typeof etat !== 'object') etat = {};
+  if(!Array.isArray(etat.docs)) etat.docs = [];
+  if(!etat.compteur || typeof etat.compteur !== 'object') etat.compteur = {DEV:0, FACT:0};
+  if(typeof etat.compteur.DEV !== 'number') etat.compteur.DEV = 0;
+  if(typeof etat.compteur.FACT !== 'number') etat.compteur.FACT = 0;
+  if(typeof etat.compteurAnnee !== 'number') etat.compteurAnnee = new Date().getFullYear();
+}
 function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
 function rafraichirListes(){
@@ -443,18 +472,20 @@ function calc(){
 }
 
 function nombreEnLettres(n){
-  n = Math.round(n || 0);
+  n = Math.round(Math.abs(n || 0));
   if (n === 0) return "zéro";
   const u = ["", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix",
              "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"];
   const d = ["", "", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante", "quatre-vingt", "quatre-vingt"];
+
+  /* 0 à 999 */
   function sous(n){
     if (n < 20) return u[n];
     if (n < 100){
       const diz = Math.floor(n/10), unit = n%10;
       if (diz === 7 || diz === 9){
         const base = d[diz];
-        if (unit === 0) return base + (diz === 7 ? "-dix" : "-dix");
+        if (unit === 0) return base + "-dix";
         if (diz === 7 && unit === 1) return "soixante et onze";
         return base + "-" + u[10 + unit];
       }
@@ -463,32 +494,62 @@ function nombreEnLettres(n){
       return d[diz] + "-" + u[unit];
     }
     const cent = Math.floor(n/100), reste = n%100;
-    let tete = cent === 1 ? "cent" : u[cent] + " cent" + (reste === 0 ? "s" : "");
+    const tete = cent === 1 ? "cent" : u[cent] + " cent" + (reste === 0 ? "s" : "");
     return reste ? tete + " " + sous(reste) : tete;
   }
-  function mille(n){
-    if (n < 1000) return sous(n);
-    if (n < 1000000){
-      const m = Math.floor(n/1000), r = n%1000;
-      let t = m === 1 ? "mille" : sous(m) + " mille";
-      return r ? t + " " + sous(r) : t;
-    }
-    const mi = Math.floor(n/1000000), r = n%1000000;
-    let t = mi === 1 ? "un million" : sous(mi) + " millions";
-    return r ? t + " " + mille(r) : t;
-  }
-  return mille(n);
+  /* "cents" et "vingts" perdent le s devant "mille" */
+  const sansS = s => s.replace(/cents$/, "cent").replace(/vingts$/, "vingt");
+
+  const milliards = Math.floor(n / 1000000000);
+  const millions  = Math.floor((n % 1000000000) / 1000000);
+  const milliers  = Math.floor((n % 1000000) / 1000);
+  const reste     = n % 1000;
+
+  const morceaux = [];
+  if (milliards) morceaux.push(milliards === 1 ? "un milliard" : sous(milliards) + " milliards");
+  if (millions)  morceaux.push(millions === 1 ? "un million" : sous(millions) + " millions");
+  if (milliers)  morceaux.push(milliers === 1 ? "mille" : sansS(sous(milliers)) + " mille");
+  if (reste)     morceaux.push(sous(reste));
+  return morceaux.join(" ");
 }
 
-function numSuivant(type){
-  etat.compteur = etat.compteur || {DEV:0,FACT:0};
-  etat.compteur[type] = (etat.compteur[type]||0)+1;
-  return type + '-' + new Date().getFullYear() + '-' + String(etat.compteur[type]).padStart(4,'0');
+/* ---------- numerotation : serie annuelle, sans doublon ---------- */
+function numLisible(type, n, annee){ return type + '-' + annee + '-' + String(n).padStart(4,'0'); }
+
+function numeroMax(type, annee){
+  let max = 0;
+  (etat.docs || []).forEach(d => {
+    const m = String(d.num || '').match(/^(DEV|FACT)-(\d{4})-(\d+)$/);
+    if (m && m[1] === type && +m[2] === annee) max = Math.max(max, +m[3]);
+  });
+  return max;
+}
+
+/* Numero qui serait attribue. Ne consomme rien : un apercu ne brule pas de numero. */
+function prochainNumero(type){
+  const annee = new Date().getFullYear();
+  const c = (etat.compteurAnnee === annee && typeof (etat.compteur || {})[type] === 'number') ? etat.compteur[type] : 0;
+  return numLisible(type, Math.max(numeroMax(type, annee), c) + 1, annee);
+}
+
+/* Attribution definitive, enregistree immediatement sur l'appareil. */
+function allouerNumero(type){
+  const annee = new Date().getFullYear();
+  if (etat.compteurAnnee !== annee){
+    etat.compteurAnnee = annee;
+    etat.compteur = { DEV: numeroMax('DEV', annee), FACT: numeroMax('FACT', annee) };
+  }
+  if (!etat.compteur) etat.compteur = { DEV: 0, FACT: 0 };
+  const n = Math.max(numeroMax(type, annee), etat.compteur[type] || 0) + 1;
+  etat.compteur[type] = n;
+  sauver();
+  return numLisible(type, n, annee);
 }
 
 function remplirDoc(){
   const s = soc(), t = totaux();
-  const num = courant.num || (courant.id ? (etat.docs.find(d=>d.id===courant.id)||{}).num : numSuivant(courant.type));
+  const existant = courant.id ? etat.docs.find(d => d.id === courant.id) : null;
+  const num = courant.num || (existant && existant.num) || prochainNumero(courant.type);
   courant.num = num;
   $('dSoc').textContent = s.nom;
   $('dSocInfo').innerHTML = [s.adr, s.tel ? 'Tél. '+s.tel : '', s.ncc ? 'NCC/RCCM : '+s.ncc : ''].filter(Boolean).join('<br>');
@@ -531,6 +592,8 @@ function apercu(){
 }
 
 function enregistrer(){
+  const dejaEnBase = !!(courant.id && etat.docs.some(d => d.id === courant.id));
+  if (!dejaEnBase) courant.num = allouerNumero(courant.type);
   remplirDoc();
   const doc = {
     id: courant.id || (Date.now()+''+Math.floor(Math.random()*99)),
@@ -578,13 +641,14 @@ function afficherRegistre(){
     (!q || (d.client || '').toLowerCase().includes(q) || d.num.toLowerCase().includes(q))
   );
   if(!liste.length){ w.innerHTML = '<div class="vide">Aucun document ne correspond à cette recherche.</div>'; return; }
-  let h = '<table class="reg"><thead><tr><th>N°</th><th>Client</th><th>Date</th><th style="text-align:right">Montant</th><th>Statut</th></tr></thead><tbody>';
+  let h = '<table class="reg"><thead><tr><th>N°</th><th>Client</th><th>Date</th><th style="text-align:right">Montant</th><th>Statut</th><th></th></tr></thead><tbody>';
   const STATUTS = ['brouillon','envoyé','accepté','payé','impayé'];
   liste.forEach(d=>{
     const opts = STATUTS.map(s=>`<option value="${s}"${s===d.statut?' selected':''}>${s}</option>`).join('');
     h += `<tr data-open="${d.id}"><td><b>${d.num}</b></td><td>${(d.client||'—').replace(/</g,'&lt;')}</td>
       <td>${d.date}</td><td style="text-align:right;white-space:nowrap"><b>${F(d.total)}</b></td>
-      <td><select class="statut" data-statut="${d.id}">${opts}</select></td></tr>`;
+      <td><select class="statut" data-statut="${d.id}">${opts}</select></td>
+      <td class="sup"><button class="del-doc" data-suppr="${d.id}" title="Supprimer ce document" aria-label="Supprimer ${d.num}">×</button></td></tr>`;
   });
   w.innerHTML = h + '</tbody></table>';
   const info = document.getElementById('backupInfo');
@@ -603,6 +667,17 @@ function afficherRegistre(){
     sel.addEventListener('change', e=>{
       const d = etat.docs.find(x=>x.id===sel.dataset.statut);
       if(d){ d.statut = sel.value; sauver(); toast(d.num + ' → ' + d.statut); }
+    });
+  });
+  w.querySelectorAll('[data-suppr]').forEach(b=>{
+    b.addEventListener('click', e=>{
+      e.stopPropagation();
+      const d = etat.docs.find(x=>x.id===b.dataset.suppr);
+      if(!d) return;
+      if(!confirm('Supprimer définitivement ' + d.num + ' ?\nCette action ne peut pas être annulée.')) return;
+      etat.docs = etat.docs.filter(x=>x.id!==d.id);
+      if(courant.id === d.id) nouveau('DEV');
+      sauver(); afficherRegistre(); toast(d.num + ' supprimé');
     });
   });
 }
@@ -713,8 +788,9 @@ $('fileImport').addEventListener('change',(e)=>{
     try {
       const d = JSON.parse(rd.result);
       if(!d || !Array.isArray(d.docs)) throw new Error('format');
-      etat = {docs:d.docs, compteur:d.compteur || {DEV:0,FACT:0}};
-      sauver(); afficherRegistre();
+      etat = {docs:d.docs, compteur:d.compteur || {DEV:0,FACT:0}, compteurAnnee:d.compteurAnnee};
+      normaliserEtat();
+      sauver(); afficherRegistre(); rafraichirListes();
       toast('Copie restaurée : ' + d.docs.length + ' document(s)');
     } catch(err) { toast('Fichier non reconnu'); }
     e.target.value = '';
@@ -728,10 +804,14 @@ $('btnExport').addEventListener('click',()=>{
   a.download='sauvegarde-devis-factures.json'; a.click();
 });
 $('btnReset').addEventListener('click',()=>{
-  if(confirm('Effacer tous les documents enregistrés sur cet appareil ?')){ etat={docs:[],compteur:{DEV:0,FACT:0}}; sauver(); afficherRegistre(); }
+  if(confirm('Effacer tous les documents enregistrés sur cet appareil ?\nLa numérotation continue : les anciens numéros ne seront pas réutilisés.')){
+    etat = {docs:[], compteur:etat.compteur, compteurAnnee:etat.compteurAnnee};
+    sauver(); afficherRegistre(); toast('Documents effacés');
+  }
 });
 
 // démarrage
+normaliserEtat();
 chargerSoc();
 if(!$('date').value) $('date').value = new Date().toISOString().slice(0,10);
 dessinerLignes(); calc(); afficherRegistre(); rafraichirListes(); verifierSauvegarde();
