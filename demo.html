@@ -303,6 +303,7 @@
     align-items:center;
   }
   .brand{color:#fff; font-size:17px; letter-spacing:-.2px}
+  .brand-txt{display:flex; flex-direction:column; line-height:1.15}
   .brand small{color:rgba(255,255,255,.62); font-size:11.5px; margin-top:2px; letter-spacing:.2px}
   .brand::before{
     width:38px; height:38px; flex:0 0 38px; border-radius:12px;
@@ -445,7 +446,7 @@ if(!localStorage.getItem('df_demo_soc')){
 <div id="toast"></div>
 <div class="app">
   <header class="top">
-    <div class="brand">Devis &amp; Factures<small id="socLabel">Votre entreprise</small></div>
+    <div class="brand"><span class="brand-txt">Devis &amp; Factures<small id="socLabel">Votre entreprise</small></span></div>
     <div class="tabs">
       <button class="tab on" data-tab="edit">Nouveau</button>
       <button class="tab" data-tab="reg">Registre</button>
