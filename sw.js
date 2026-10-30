@@ -1,6 +1,6 @@
 /* Service worker — Devis & Factures
    Réseau d'abord pour la page, cache en secours (fonctionne hors ligne). */
-const CACHE = "devis-factures-v12";
+const CACHE = "devis-factures-v13";
 const FICHIERS = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {

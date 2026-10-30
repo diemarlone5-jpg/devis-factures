@@ -424,6 +424,8 @@
     .brand{font-size:16px}
     .card{padding:16px; border-radius:18px}
     .totaux .grand span:last-child{font-size:23px}
+    #installBar, #backupBar{font-size:12px; padding:9px 11px; gap:8px; line-height:1.3}
+    #installBar button, #backupBar button{padding:7px 10px; font-size:12px}
     #vue-edit .btns{position:sticky; bottom:8px; z-index:20;
       background:linear-gradient(180deg, rgba(247,249,245,0), rgba(247,249,245,.96) 38%);
       padding:10px 0 4px; margin-top:6px}
@@ -432,7 +434,6 @@
 </head>
 <body>
 <script>
-/* page de demonstration : entreprise pre-remplie, donnees separees */
 if(!localStorage.getItem('df_demo_soc')){
   localStorage.setItem('df_demo_soc', JSON.stringify({
     socNom:'KOFFI BÂTIMENT & SERVICES', socTel:'07 08 12 34 56',
@@ -1572,7 +1573,7 @@ function verifierSauvegarde(){
   if(jours >= 7){
     document.getElementById('backupTxt').textContent = last
       ? "Dernière sauvegarde : il y a " + jours + " jours. Vos documents sont sur cet appareil."
-      : "Aucune sauvegarde. Vos documents sont sur cet appareil : une copie est conseillée.";
+      : "Aucune sauvegarde. Vos documents sont sur cet appareil.";
     barre.style.display = 'flex';
   } else {
     barre.style.display = 'none';
