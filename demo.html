@@ -276,6 +276,157 @@
     .stats{grid-template-columns:repeat(2,1fr)}
     .stat b{font-size:15px}
   }
+
+  /* ==================== DESIGN V2 ==================== */
+  :root{
+    --ombre:0 1px 2px rgba(9,42,33,.05), 0 10px 30px -18px rgba(9,42,33,.45);
+    --ombre-forte:0 18px 40px -22px rgba(9,42,33,.55);
+    --bord:#E3E8DE;
+  }
+  body{
+    background:
+      radial-gradient(900px 380px at 50% -140px, #E9F0E9 0%, rgba(233,240,233,0) 72%),
+      linear-gradient(180deg,#F7F9F5 0%, #F2F5F0 100%);
+    overflow-x:hidden;
+  }
+  .app{max-width:980px; padding:0 16px 100px}
+
+  /* ---- barre d'application ---- */
+  header.top{
+    position:sticky; top:10px; z-index:30;
+    margin:0 0 16px; padding:13px 18px;
+    border-radius:20px;
+    background:
+      radial-gradient(600px 160px at 12% -40%, rgba(201,162,39,.22) 0%, rgba(201,162,39,0) 70%),
+      linear-gradient(135deg,#0E4436 0%, #0B3B2E 45%, #082A21 100%);
+    box-shadow:0 10px 30px -14px rgba(9,42,33,.55);
+    align-items:center;
+  }
+  .brand{color:#fff; font-size:17px; letter-spacing:-.2px}
+  .brand small{color:rgba(255,255,255,.62); font-size:11.5px; margin-top:2px; letter-spacing:.2px}
+  .brand::before{
+    width:38px; height:38px; flex:0 0 38px; border-radius:12px;
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='white' d='M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z' opacity='.96'/><path fill='%23C9A227' d='M9 12h6v1.6H9zM9 15h4.4v1.6H9z'/></svg>"),
+      linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.03));
+    background-size:21px 21px, cover;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.25), 0 6px 16px -6px rgba(0,0,0,.5);
+  }
+  .tabs{background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.16); box-shadow:none; padding:4px}
+  .tab{color:rgba(255,255,255,.74); font-size:13px}
+  .tab:hover{color:#fff; background:rgba(255,255,255,.08)}
+  .tab.on{background:var(--creme); color:var(--vert); box-shadow:0 4px 12px -4px rgba(0,0,0,.45)}
+
+  /* ---- cartes ---- */
+  .card{
+    border-radius:20px; padding:20px 20px 18px; margin-bottom:14px;
+    border:1px solid rgba(227,232,222,.9);
+    box-shadow:var(--ombre);
+    transition:box-shadow .2s ease, transform .2s ease;
+  }
+  .card:hover{box-shadow:var(--ombre-forte)}
+  h2{
+    font-size:12px; letter-spacing:.09em; margin-bottom:14px; color:var(--vert);
+    display:flex; align-items:center; gap:8px;
+  }
+  h2::before{width:7px; height:7px; box-shadow:0 0 0 4px rgba(201,162,39,.16)}
+
+  /* ---- champs ---- */
+  label{font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:#7A8880; font-weight:700; margin-bottom:6px}
+  input,select,textarea{
+    border-radius:12px; padding:12px 13px; font-size:15px;
+    background:#FCFDFB; border:1.5px solid #E6EBE2;
+    box-shadow:inset 0 1px 2px rgba(9,42,33,.03);
+    transition:border-color .15s, box-shadow .15s, background .15s;
+  }
+  input:hover,select:hover{border-color:#CFD9C9}
+  input:focus,select:focus,textarea:focus{
+    border-color:var(--vert-clair); background:#fff;
+    box-shadow:0 0 0 4px rgba(21,90,69,.10);
+  }
+  input:disabled,select:disabled{background:#F2F4EF; color:#7E8B84; border-color:#E6EADF; box-shadow:none}
+
+  /* ---- boutons ---- */
+  .btn{border-radius:12px; padding:13px 18px; letter-spacing:0; box-shadow:0 1px 2px rgba(9,42,33,.06)}
+  .btn-p{background:linear-gradient(180deg,#17614B 0%,#0B3B2E 100%); box-shadow:0 6px 18px -8px rgba(11,59,46,.75)}
+  .btn-g{background:linear-gradient(180deg,#E8C765 0%,#C9A227 100%); color:#2A2005; box-shadow:0 6px 18px -8px rgba(201,162,39,.8)}
+  .btn-s{background:#fff; border:1.5px solid #DFE5DA}
+  .btn:hover{transform:translateY(-1px)}
+  .btn:active{transform:translateY(0) scale(.995)}
+
+  /* ---- totaux ---- */
+  .totaux{border-top:1px dashed #DCE3D6; padding-top:14px}
+  .totaux .grand{
+    margin-top:12px; padding:16px 18px; border-radius:16px;
+    background:linear-gradient(160deg,#FBF7EA 0%, #F3EDD9 100%);
+    border:1px solid #E9DFC2; box-shadow:inset 0 1px 0 #fff;
+  }
+  .totaux .grand span:last-child{font-size:27px; letter-spacing:-.6px}
+
+  /* ---- stats ---- */
+  .stat{border-radius:14px; padding:12px 14px; background:linear-gradient(180deg,#FFFFFF,#FAFCF8)}
+  .stat b{font-size:18px}
+
+  /* ---- registre : statuts colorés ---- */
+  table.reg select.statut{border-width:1.5px; font-size:11.5px; padding:6px 10px}
+  table.reg select.statut[data-v="payé"]{background:#E4F3E9; color:#1E6B3A; border-color:#BFE3CC}
+  table.reg select.statut[data-v="payée partiellement"]{background:#FBF3DE; color:#7E6417; border-color:#EADFB9}
+  table.reg select.statut[data-v="émise"]{background:#EDF1FB; color:#33478A; border-color:#D5DEF5}
+  table.reg select.statut[data-v="envoyé"]{background:#EDF1FB; color:#33478A; border-color:#D5DEF5}
+  table.reg select.statut[data-v="impayé"]{background:#FCEAEA; color:#A33B3B; border-color:#F0DCDC}
+  table.reg select.statut[data-v="annulé"]{background:#F2F2F2; color:#777; border-color:#DEDEDE}
+  table.reg select.statut[data-v="brouillon"]{background:#F4F1E8; color:#6B6250; border-color:#E7DFCB}
+
+  /* ---- etat vide ---- */
+  .vide::before{
+    width:56px; height:56px; border:0; border-radius:16px;
+    background:
+      linear-gradient(180deg,#F4F7F1,#EDF2E8);
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238FA396' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z'/><path d='M14 3v5h5'/><path d='M9 14h6'/><path d='M9 17h4'/></svg>"),
+      linear-gradient(180deg,#F4F7F1,#EDF2E8);
+    background-size:28px 28px, cover; background-repeat:no-repeat; background-position:center;
+  }
+
+  /* ---- barres du haut plus discretes ---- */
+  #installBar, #backupBar{
+    border-radius:14px; padding:11px 14px; margin:0 0 10px; max-width:none;
+    font-size:13px; box-shadow:0 6px 18px -12px rgba(9,42,33,.6);
+  }
+  #installBar{background:#F1F6F1; color:var(--vert); border:1px solid #D9E6DA; box-shadow:none}
+  #installBar button{background:var(--vert); color:#fff}
+  #backupBar{background:#FDF7E6; color:#6E5616; border:1px solid #EDE2C2; box-shadow:none}
+  #backupBar button{background:#6E5616; color:#fff}
+
+  /* ---- micro-animations ---- */
+  @keyframes rise{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:none}}
+  .card{animation:rise .34s cubic-bezier(.2,.7,.3,1) both}
+  .card:nth-of-type(2){animation-delay:.04s}
+  .card:nth-of-type(3){animation-delay:.08s}
+  .card:nth-of-type(4){animation-delay:.12s}
+  .stat b, .totaux .grand span:last-child{font-variant-numeric:tabular-nums}
+  @media (prefers-reduced-motion: reduce){ .card{animation:none} }
+
+  /* ---- marqueur sur le document ---- */
+  .doc{position:relative}
+  .doc .watermark{
+    position:absolute; top:44%; left:50%; transform:translate(-50%,-50%) rotate(-16deg);
+    font-size:82px; font-weight:800; letter-spacing:6px; color:rgba(30,107,58,.10);
+    pointer-events:none; white-space:nowrap; z-index:0;
+  }
+  .doc .signature{margin-top:18px; display:flex; justify-content:flex-end}
+  .doc .signature div{width:70mm; border-top:1px solid #C9C9C9; padding-top:5px; font-size:9.5px; color:#666}
+  .doc .signature b{display:block; font-size:9.5px; color:var(--vert); margin-bottom:14px}
+
+  @media (max-width:560px){
+    header.top{padding:12px 14px; border-radius:18px; margin-bottom:14px; top:6px}
+    .brand{font-size:16px}
+    .card{padding:16px; border-radius:18px}
+    .totaux .grand span:last-child{font-size:23px}
+    #vue-edit .btns{position:sticky; bottom:8px; z-index:20;
+      background:linear-gradient(180deg, rgba(247,249,245,0), rgba(247,249,245,.96) 38%);
+      padding:10px 0 4px; margin-top:6px}
+  }
 </style>
 </head>
 <body>
@@ -292,14 +443,6 @@ if(!localStorage.getItem('df_demo_soc')){
 
 
 <div id="toast"></div>
-<div id="installBar">
-  <span>Installez l'outil sur cet appareil pour l'ouvrir en un clic</span>
-  <button id="btnInstall">Installer</button>
-</div>
-<div id="backupBar">
-  <span id="backupTxt">Pensez à sauvegarder vos documents</span>
-  <button id="btnBackupNow">Sauvegarder</button>
-</div>
 <div class="app">
   <header class="top">
     <div class="brand">Devis &amp; Factures<small id="socLabel">Votre entreprise</small></div>
@@ -309,6 +452,14 @@ if(!localStorage.getItem('df_demo_soc')){
       <button class="tab" data-tab="cli">Clients</button>
     </div>
   </header>
+  <div id="installBar">
+    <span>Installez l'outil sur cet appareil pour l'ouvrir en un clic</span>
+    <button id="btnInstall">Installer</button>
+  </div>
+  <div id="backupBar">
+    <span id="backupTxt">Pensez à sauvegarder vos documents</span>
+    <button id="btnBackupNow">Sauvegarder</button>
+  </div>
 
   <!-- ============ EDITEUR ============ -->
   <section id="vue-edit">
@@ -485,6 +636,7 @@ if(!localStorage.getItem('df_demo_soc')){
 
 <!-- ============ DOCUMENT IMPRIMABLE ============ -->
 <div class="doc" id="doc">
+  <div class="watermark" id="dMark"></div>
   <div class="dh">
     <div class="soc"><span id="dSoc">VOTRE ENTREPRISE</span>
       <small id="dSocInfo"></small>
@@ -513,6 +665,8 @@ if(!localStorage.getItem('df_demo_soc')){
   </div>
 
   <div id="dLettres" style="margin-top:8px;font-size:10.5px;font-style:italic;color:#333"></div>
+
+  <div class="signature" id="dSign"><div><b>Bon pour accord</b>Date et signature du client</div></div>
 
   <div class="fne" id="dFne"></div>
 
@@ -853,6 +1007,12 @@ function remplirDoc(){
   if(dSave && dSave.statut === 'annulé'){
     $('dType').textContent = (courant.type === 'DEV' ? 'DEVIS ANNULÉ' : 'FACTURE ANNULÉE');
   }
+  const soldeDoc = dSave ? calcDoc(dSave).solde : t.net;
+  const payeDoc = dSave ? calcDoc(dSave).paye : 0;
+  $('dMark').textContent = (dSave && dSave.statut === 'annulé') ? 'ANNULÉE'
+    : ((courant.type === 'FACT' && payeDoc > 0 && soldeDoc <= 0) ? 'PAYÉ' : '');
+  $('dMark').style.color = (dSave && dSave.statut === 'annulé') ? 'rgba(163,59,59,.12)' : 'rgba(30,107,58,.10)';
+  $('dSign').style.display = (courant.type === 'DEV') ? 'flex' : 'none';
   const nf = ($('numFne').value || '').trim();
   const rf = ($('refFne').value || '').trim();
   $('dFne').innerHTML = (nf || rf)
@@ -1004,7 +1164,7 @@ function afficherRegistre(){
     const jr = joursRetard(d);
     h += `<tr data-open="${d.id}"><td><b>${d.num}</b></td><td>${(d.client||'—').replace(/</g,'&lt;')}</td>
       <td>${d.date}</td><td style="text-align:right;white-space:nowrap"><b>${F(d.total)}</b>${jr?'<div class="ret">'+jr+' j de retard</div>':''}</td>
-      <td><select class="statut" data-statut="${d.id}">${opts}</select></td>
+      <td><select class="statut" data-statut="${d.id}" data-v="${esc(d.statut||'')}">${opts}</select></td>
       <td class="sup"><button class="del-doc" data-suppr="${d.id}" title="Supprimer ce document" aria-label="Supprimer ${d.num}">×</button></td></tr>`;
   });
   w.innerHTML = h + '</tbody></table>';
@@ -1023,7 +1183,7 @@ function afficherRegistre(){
     sel.addEventListener('click', e=>e.stopPropagation());
     sel.addEventListener('change', e=>{
       const d = etat.docs.find(x=>x.id===sel.dataset.statut);
-      if(d){ d.statut = sel.value; sauver(); toast(d.num + ' → ' + d.statut); }
+      if(d){ d.statut = sel.value; sel.dataset.v = sel.value; sauver(); toast(d.num + ' → ' + d.statut); }
     });
   });
   w.querySelectorAll('[data-suppr]').forEach(b=>{
