@@ -124,6 +124,22 @@
   .stat.alerte b{color:var(--rouge)}
   .ret{font-size:10.5px; color:var(--rouge); font-weight:700; margin-top:2px}
 
+  /* ---------- remise : valeur + unite ---------- */
+  .duo{display:flex; gap:6px}
+  .duo input{flex:1; min-width:0}
+  .duo select{flex:0 0 86px; width:86px}
+
+  /* ---------- fiches clients ---------- */
+  .cli{display:flex; justify-content:space-between; align-items:center; gap:12px;
+    padding:12px; border:1px solid var(--bord); border-radius:12px; background:#fff; margin-bottom:8px; cursor:pointer; transition:.15s}
+  .cli:hover{border-color:var(--vert-clair); background:#F8FAF7}
+  .cli .nom{font-weight:700; font-size:14.5px}
+  .cli .meta{font-size:11.5px; color:var(--gris); margin-top:2px}
+  .cli .droite{text-align:right; white-space:nowrap}
+  .cli .du{font-weight:800; color:var(--vert); font-size:15.5px}
+  .cli .du.alerte{color:var(--rouge)}
+  .cli .du span{display:block; font-size:9px; text-transform:uppercase; letter-spacing:.6px; color:var(--gris); font-weight:700}
+
   /* ---------- statuts ---------- */
   .pill{display:inline-block; font-size:11px; padding:4px 10px; border-radius:20px; background:var(--creme); color:var(--vert); font-weight:700}
   .pill.paye{background:#E4F3E9; color:#1E6B3A}
@@ -196,7 +212,9 @@
     .app{padding:10px 10px 90px}
     .brand{font-size:15px; white-space:nowrap}
     .brand small{display:none}
-    header.top{gap:6px}
+    header.top{gap:6px; flex-wrap:wrap}
+    .tabs{width:100%}
+    .tab{flex:1; padding:8px 6px; font-size:12.5px}
     .card{padding:14px; border-radius:14px}
     .row>div{min-width:100%}
     .brand::before{width:32px;height:32px;flex:0 0 32px}
@@ -259,6 +277,7 @@
     <div class="tabs">
       <button class="tab on" data-tab="edit">Nouveau</button>
       <button class="tab" data-tab="reg">Registre</button>
+      <button class="tab" data-tab="cli">Clients</button>
     </div>
   </header>
 
@@ -273,9 +292,22 @@
         <div><label>Nom de l'entreprise</label><input id="socNom" placeholder="Ex. KOFFI BÂTIMENT"></div>
         <div><label>Téléphone</label><input id="socTel" placeholder="07 00 00 00 00"></div>
       </div>
-      <div class="row">
+      <div class="row mb">
         <div><label>Adresse</label><input id="socAdr" placeholder="Yopougon, Abidjan"></div>
         <div><label>NCC / RCCM</label><input id="socNcc" placeholder="CI-ABJ-2026-B-00000"></div>
+        <div><label>Régime fiscal</label>
+          <select id="socRegime">
+            <option value="">—</option>
+            <option value="RNI">Réel normal (RNI)</option>
+            <option value="RSI">Réel simplifié (RSI)</option>
+            <option value="RME">Micro-entreprise (RME)</option>
+            <option value="Entreprenant">Entreprenant</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div><label>Coordonnées de paiement (mobile money, banque)</label>
+          <input id="socPaiement" placeholder="Ex. Wave / Orange Money 07 08 12 34 56 — Compte NSIA 0012 3456 7890"></div>
       </div>
       <p class="hint">Ces informations apparaissent sur vos documents. Elles sont enregistrées sur cet appareil.</p>
     </div>
@@ -307,7 +339,15 @@
         <div><label>Appliquer une TVA à toutes les lignes</label>
           <select id="tva"><option value="18">18 %</option><option value="9">9 %</option><option value="0">Exonéré</option></select>
         </div>
-        <div><label>Remise (FCFA)</label><input id="remise" type="number" value="0" min="0"></div>
+        <div><label>Remise</label>
+          <div class="duo">
+            <input id="remise" type="number" value="0" min="0" step="any">
+            <select id="remiseType" aria-label="Type de remise">
+              <option value="fcfa">FCFA</option>
+              <option value="pct">%</option>
+            </select>
+          </div>
+        </div>
         <div><label>Acompte déjà versé (FCFA)</label><input id="acompte" type="number" value="0" min="0"></div>
       </div>
 
@@ -323,7 +363,7 @@
         <div><span>Sous-total</span><b id="tSous">0 F</b></div>
         <div id="tTvaDetail"></div>
         <div><span>TVA <span id="tTvaLbl"></span></span><b id="tTva">0 F</b></div>
-        <div><span>Remise</span><b id="tRem">0 F</b></div>
+        <div><span id="tRemLbl">Remise</span><b id="tRem">0 F</b></div>
         <div class="grand"><span>Net à payer</span><span id="tNet">0 F</span></div>
         <div id="ligneAcompte" style="display:none"><span>Reste à payer</span><b id="tReste">0 F</b></div>
       </div>
@@ -364,6 +404,18 @@
       <p class="hint" id="backupInfo">Cliquez sur une ligne pour rouvrir le document. Les données restent sur cet appareil.</p>
     </div>
   </section>
+
+  <!-- ============ CLIENTS ============ -->
+  <section id="vue-cli" style="display:none">
+    <div class="card">
+      <h2>Fiches clients</h2>
+      <div class="row" style="margin-bottom:10px">
+        <div><input id="cliSearch" placeholder="Rechercher un client…"></div>
+      </div>
+      <div id="cliWrap"></div>
+      <p class="hint">Le solde dû correspond aux factures non payées. Cliquez sur un client pour retrouver ses documents dans le registre.</p>
+    </div>
+  </section>
 </div>
 
 <!-- ============ DOCUMENT IMPRIMABLE ============ -->
@@ -389,7 +441,7 @@
     <div><span>Sous-total</span><span id="dSous"></span></div>
     <div id="dTvaDetail"></div>
     <div><span>TVA <span id="dTvaTxt"></span></span><span id="dTva"></span></div>
-    <div><span>Remise</span><span id="dRem"></span></div>
+    <div><span id="dRemLbl">Remise</span><span id="dRem"></span></div>
     <div class="g"><span>Net à payer</span><span id="dNet"></span></div>
     <div id="dAcompteLine" style="display:none"><span>Acompte versé</span><span id="dAcompte"></span></div>
     <div id="dResteLine" style="display:none;font-weight:700"><span>Reste à payer</span><span id="dReste"></span></div>
@@ -404,6 +456,7 @@
 
 <script>
 const F = n => (Math.round(n||0)).toLocaleString('fr-FR').replace(/\u202f|\u00a0/g,' ') + ' F';
+const TITRE_PAGE = document.title;
 const $ = id => document.getElementById(id);
 let etat = JSON.parse(localStorage.getItem('df_v1') || '{"docs":[],"compteur":{"DEV":0,"FACT":0}}');
 let courant = { type:'DEV', id:null, lignes:[{des:'',qte:1,pu:0}] };
@@ -466,15 +519,17 @@ function convertir(){
 }
 
 function soc(){
-  return { nom:$('socNom').value || 'VOTRE ENTREPRISE', tel:$('socTel').value, adr:$('socAdr').value, ncc:$('socNcc').value };
+  return { nom:$('socNom').value || 'VOTRE ENTREPRISE', tel:$('socTel').value, adr:$('socAdr').value,
+           ncc:$('socNcc').value, regime:$('socRegime').value, paiement:$('socPaiement').value };
 }
 function chargerSoc(){
   const s = JSON.parse(localStorage.getItem('df_soc') || '{}');
-  ['socNom','socTel','socAdr','socNcc'].forEach(k=>{ if(s[k]) $(k).value = s[k]; });
+  ['socNom','socTel','socAdr','socNcc','socRegime','socPaiement'].forEach(k=>{ if(s[k]) $(k).value = s[k]; });
   $('socLabel').textContent = s.socNom || 'Votre entreprise';
 }
 function garderSoc(){
-  const s = {socNom:$('socNom').value,socTel:$('socTel').value,socAdr:$('socAdr').value,socNcc:$('socNcc').value};
+  const s = {socNom:$('socNom').value,socTel:$('socTel').value,socAdr:$('socAdr').value,
+             socNcc:$('socNcc').value,socRegime:$('socRegime').value,socPaiement:$('socPaiement').value};
   localStorage.setItem('df_soc', JSON.stringify(s));
   $('socLabel').textContent = s.socNom || 'Votre entreprise';
 }
@@ -524,10 +579,13 @@ function totaux(){
     parTaux[taux] = (parTaux[taux]||0) + base*taux/100;
   });
   const tva = Object.keys(parTaux).reduce((s,k)=>s+parTaux[k],0);
-  const rem = parseFloat($('remise').value)||0;
-  const net = Math.max(0, sous + tva - rem);
+  const brut = sous + tva;
+  const remType = $('remiseType').value || 'fcfa';
+  const remVal = parseFloat($('remise').value)||0;
+  const rem = remType === 'pct' ? brut*remVal/100 : remVal;
+  const net = Math.max(0, brut - rem);
   const ac = parseFloat($('acompte').value)||0;
-  return {sous, tva, parTaux, rem, net, ac, reste:Math.max(0,net-ac)};
+  return {sous, tva, parTaux, rem, remType, remVal, net, ac, reste:Math.max(0,net-ac)};
 }
 
 /* detail de TVA : une ligne par taux des qu'il y en a plusieurs */
@@ -544,6 +602,7 @@ function calc(){
   }
   $('tTva').textContent = F(t.tva);
   $('tRem').textContent = F(t.rem);
+  $('tRemLbl').textContent = t.remType === 'pct' && t.remVal ? 'Remise ('+t.remVal+' %)' : 'Remise';
   $('tNet').textContent = F(t.net);
   $('ligneAcompte').style.display = t.ac>0 ? 'flex' : 'none';
   $('tReste').textContent = F(t.reste);
@@ -630,7 +689,7 @@ function remplirDoc(){
   const num = courant.num || (existant && existant.num) || prochainNumero(courant.type);
   courant.num = num;
   $('dSoc').textContent = s.nom;
-  $('dSocInfo').innerHTML = [s.adr, s.tel ? 'Tél. '+s.tel : '', s.ncc ? 'NCC/RCCM : '+s.ncc : ''].filter(Boolean).join('<br>');
+  $('dSocInfo').innerHTML = [s.adr, s.tel ? 'Tél. '+s.tel : '', s.ncc ? 'NCC/RCCM : '+s.ncc : '', s.regime ? 'Régime fiscal : '+s.regime : ''].filter(Boolean).join('<br>');
   $('dType').textContent = courant.type === 'DEV' ? 'DEVIS' : 'FACTURE';
   $('dNum').textContent = num;
   const d = $('date').value ? new Date($('date').value+'T12:00:00') : new Date();
@@ -655,6 +714,7 @@ function remplirDoc(){
   }
   $('dTva').textContent = F(t.tva);
   $('dRem').textContent = F(t.rem);
+  $('dRemLbl').textContent = t.remType === 'pct' && t.remVal ? 'Remise ('+t.remVal+' %)' : 'Remise';
   $('dNet').textContent = F(t.net);
   $('dAcompteLine').style.display = t.ac>0?'flex':'none';
   $('dAcompte').textContent = F(t.ac);
@@ -673,15 +733,23 @@ function remplirDoc(){
   const paiement = (courant.type === 'DEV')
     ? 'Devis valable 30 jours à compter de sa date. '
     : (ech ? 'Paiement à échéance du ' + new Date(ech+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}) + '. ' : 'Paiement à réception. ');
+  const mentionsDoc = [];
+  if(s.ncc) mentionsDoc.push('NCC / RCCM : ' + esc(s.ncc));
+  if(s.regime) mentionsDoc.push('Régime fiscal : ' + esc(s.regime));
   $('dPied').innerHTML = paiement +
+    (s.paiement ? 'Règlement : ' + esc(s.paiement) + '.<br>' : '') +
     'Paiement par mobile money ou virement. Tout retard de paiement peut entraîner des frais de relance.<br>' +
-    'Document généré par le système de devis et factures de ' + s.nom + '.';
+    'Document généré par le système de devis et factures de ' + esc(s.nom) + '.' +
+    (mentionsDoc.length ? '<br>' + mentionsDoc.join(' — ') : '');
 }
 
 function apercu(){
   remplirDoc();
+  const cli = ($('cliNom').value || '').trim().replace(/[\\/:*?"<>|]/g, '');
+  document.title = (courant.type === 'DEV' ? 'Devis' : 'Facture') + ' ' + courant.num + (cli ? ' - ' + cli : '');
   window.print();
 }
+window.addEventListener('afterprint', () => { document.title = TITRE_PAGE; });
 
 function enregistrer(){
   const dejaEnBase = !!(courant.id && etat.docs.some(d => d.id === courant.id));
@@ -696,7 +764,7 @@ function enregistrer(){
     refDevis: courant.refDevis || '',
     client: $('cliNom').value, tel: $('cliTel').value, adr: $('cliAdr').value,
     lignes: JSON.parse(JSON.stringify(courant.lignes)), tva:+$('tva').value,
-    remise:+$('remise').value, acompte:+$('acompte').value,
+    remise:+$('remise').value, remiseType:$('remiseType').value, acompte:+$('acompte').value,
     numFne: $('numFne').value, refFne: $('refFne').value,
     total: totaux().net, statut: (etat.docs.find(d=>d.id===courant.id)||{}).statut || (courant.type==='DEV'?'brouillon':'émise')
   };
@@ -816,7 +884,7 @@ function ouvrir(id){
   courant = {type:d.type, id:d.id, num:d.num, refDevis:d.refDevis||null, lignes:JSON.parse(JSON.stringify(d.lignes))};
   $('cliNom').value=d.client||''; $('cliTel').value=d.tel||''; $('cliAdr').value=d.adr||'';
   $('date').value=d.date||''; $('echeance').value=d.echeance||'';
-  $('tva').value=d.tva||18; $('remise').value=d.remise||0; $('acompte').value=d.acompte||0;
+  $('tva').value=d.tva||18; $('remise').value=d.remise||0; $('remiseType').value=d.remiseType||'fcfa'; $('acompte').value=d.acompte||0;
   $('numFne').value=d.numFne||''; $('refFne').value=d.refFne||'';
   dessinerLignes(); calc(); basculer('edit');
 }
@@ -831,22 +899,70 @@ function nouveau(type){
   $('cliNom').value=''; $('cliTel').value=''; $('cliAdr').value='';
   $('date').value = new Date().toISOString().slice(0,10);
   $('echeance').value='';
-  $('tva').value=18; $('remise').value=0; $('acompte').value=0;
+  $('tva').value=18; $('remise').value=0; $('remiseType').value='fcfa'; $('acompte').value=0;
   $('numFne').value=''; $('refFne').value='';
   dessinerLignes(); calc();
+}
+
+function clientsAgreges(){
+  const map = new Map();
+  etat.docs.forEach(d=>{
+    const nom = (d.client||'').trim();
+    if(!nom) return;
+    const k = nom.toLowerCase();
+    let c = map.get(k);
+    if(!c){ c = {nom, tel:'', adr:'', nb:0, facture:0, du:0, dernier:''}; map.set(k, c); }
+    if(d.tel) c.tel = d.tel;
+    if(d.adr) c.adr = d.adr;
+    c.nb++;
+    if(!c.dernier || (d.date||'') > c.dernier) c.dernier = d.date || '';
+    if(d.type === 'FACT' && d.statut !== 'brouillon'){
+      c.facture += d.total || 0;
+      if(d.statut !== 'payé') c.du += d.total || 0;
+    }
+  });
+  return [...map.values()].sort((a,b)=> (b.du - a.du) || (b.facture - a.facture) || a.nom.localeCompare(b.nom));
+}
+
+function afficherClients(){
+  const w = $('cliWrap'); if(!w) return;
+  const q = ($('cliSearch').value || '').toLowerCase().trim();
+  const liste = clientsAgreges().filter(c => !q || c.nom.toLowerCase().includes(q) || (c.tel||'').includes(q));
+  if(!liste.length){
+    w.innerHTML = '<div class="vide">' + (etat.docs.length ? 'Aucun client ne correspond à cette recherche.' : 'Aucun client pour le moment.') + '</div>';
+    return;
+  }
+  w.innerHTML = liste.map(c=>`
+    <div class="cli" data-cli="${esc(c.nom).replace(/"/g,'&quot;')}">
+      <div>
+        <div class="nom">${esc(c.nom)}</div>
+        <div class="meta">${c.nb} document${c.nb>1?'s':''}${c.dernier?' · dernier le '+c.dernier:''}${c.tel?' · '+esc(c.tel):''}</div>
+      </div>
+      <div class="droite">
+        <div class="du${c.du>0?' alerte':''}">${F(c.du)}<span>dû</span></div>
+        <div class="meta">${F(c.facture)} facturé</div>
+      </div>
+    </div>`).join('');
+  w.querySelectorAll('[data-cli]').forEach(el=>el.addEventListener('click', ()=>{
+    $('regSearch').value = el.dataset.cli;
+    basculer('reg');
+  }));
 }
 
 function basculer(v){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.tab===v));
   $('vue-edit').style.display = v==='edit'?'block':'none';
   $('vue-reg').style.display = v==='reg'?'block':'none';
+  $('vue-cli').style.display = v==='cli'?'block':'none';
   if(v==='reg'){ afficherRegistre(); verifierSauvegarde(); }
+  if(v==='cli'){ afficherClients(); }
 }
 
 // événements
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>basculer(t.dataset.tab)));
 $('addLine').addEventListener('click',()=>{ courant.lignes.push({des:'',qte:1,pu:0,tva:(parseFloat($('tva').value)||0)}); dessinerLignes(); calc(); });
 ['tva','remise','acompte'].forEach(id=>$(id).addEventListener('input',calc));
+$('remiseType').addEventListener('change', calc);
 $('tva').addEventListener('change', ()=>{
   const v = parseFloat($('tva').value)||0;
   courant.lignes.forEach(l=>l.tva = v);
@@ -860,6 +976,7 @@ $('btnNew').addEventListener('click',nouveauDoc);
 ['regSearch','regStatut'].forEach(id => {
   const el = $(id); if(el){ el.addEventListener('input', afficherRegistre); el.addEventListener('change', afficherRegistre); }
 });
+$('cliSearch').addEventListener('input', afficherClients);
 $('cliNom').addEventListener('change', (e) => {
   const c = (etat.clients || []).find(x => x.nom.toLowerCase() === (e.target.value || '').toLowerCase());
   if (c) { if (c.tel) $('cliTel').value = c.tel; if (c.adr) $('cliAdr').value = c.adr; }
