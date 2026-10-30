@@ -115,6 +115,19 @@
   .fne-form{margin-top:14px; padding:12px 14px; border:1px dashed var(--bord-fort); border-radius:12px; background:#FBF9F2}
   .fne-form label{font-size:11.5px}
 
+  /* ---------- reglements ---------- */
+  .paiements{margin-top:16px; padding-top:14px; border-top:1px dashed var(--bord-fort)}
+  .pmt{display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:10px 12px; border:1px solid var(--bord); border-radius:10px; background:#FBFCFA; margin-bottom:6px}
+  .pmt > div{min-width:0}
+  .pmt b{font-size:13.5px; color:var(--vert)}
+  .pmt small{display:block; font-size:11px; color:var(--gris); margin-top:2px}
+  .pmt .actions{display:flex; gap:6px; flex:0 0 auto}
+  .pmt .actions button{border:1px solid var(--bord-fort); background:#fff; color:var(--vert); border-radius:8px;
+    padding:7px 10px; font-size:11.5px; font-weight:700; cursor:pointer; white-space:nowrap}
+  .pmt .actions button:hover{background:#F2F7F3}
+  .pmt .actions .sup{color:var(--rouge); border-color:#F0DCDC}
+
   /* ---------- synthese du registre ---------- */
   .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:0 0 14px}
   .stat{background:#FBFCFA; border:1px solid var(--bord); border-radius:12px; padding:10px 12px; min-width:0}
@@ -208,7 +221,9 @@
     body{background:#fff}
     .app{display:none!important}
     #toast,#installBar,#backupBar{display:none!important}
-    .doc{display:block!important; padding:0; max-width:none}
+    .doc{display:none!important; padding:0; max-width:none}
+    body:not(.print-recu) #doc{display:block!important}
+    body.print-recu #recuDoc{display:block!important}
     @page{size:A4;margin:14mm}
   }
   @media (max-width:560px){
@@ -362,7 +377,7 @@ if(!localStorage.getItem('df_demo_soc')){
             </select>
           </div>
         </div>
-        <div><label>Acompte déjà versé (FCFA)</label><input id="acompte" type="number" value="0" min="0"></div>
+        <div style="display:none"><input id="acompte" type="number" value="0" min="0"></div>
       </div>
 
       <div class="fne-form">
@@ -382,11 +397,42 @@ if(!localStorage.getItem('df_demo_soc')){
         <div id="ligneAcompte" style="display:none"><span>Reste à payer</span><b id="tReste">0 F</b></div>
       </div>
 
+      <div class="paiements" id="blocPaiements" style="display:none">
+        <h2>Règlements</h2>
+        <div id="pmtListe"></div>
+        <div class="row" style="margin-top:8px">
+          <div><label>Montant reçu (FCFA)</label><input id="pmtMontant" type="number" min="0" step="1" placeholder="0"></div>
+          <div><label>Date</label><input id="pmtDate" type="date"></div>
+          <div><label>Mode</label>
+            <select id="pmtMode">
+              <option>Espèces</option>
+              <option>Mobile money</option>
+              <option>Virement</option>
+              <option>Chèque</option>
+            </select>
+          </div>
+          <div><label>Référence</label><input id="pmtRef" placeholder="Ex. WAVE-889231"></div>
+        </div>
+        <div class="btns"><button class="btn btn-p" id="btnPmt">+ Enregistrer le paiement</button></div>
+        <div class="totaux">
+          <div><span>Montant de la facture</span><b id="pmtTotal">0 F</b></div>
+          <div><span>Déjà payé</span><b id="pmtPaye">0 F</b></div>
+          <div class="grand"><span>Solde dû</span><span id="pmtSolde">0 F</span></div>
+        </div>
+        <p class="hint">Chaque règlement peut être imprimé en reçu. Un paiement ne modifie jamais le montant de la facture.</p>
+      </div>
+
       <div class="btns">
         <button class="btn btn-g" id="btnApercu">Voir / Imprimer le PDF</button>
         <button class="btn btn-p" id="btnSave">Enregistrer</button>
+        <button class="btn btn-g" id="btnEmettre" style="display:none">Émettre la facture</button>
         <button class="btn btn-s" id="btnFact">Convertir en facture</button>
       </div>
+      <div class="btns" id="btnsDocFige" style="display:none">
+        <button class="btn btn-s" id="btnDup">Dupliquer en brouillon</button>
+        <button class="btn btn-d" id="btnAnnuler">Annuler cette facture</button>
+      </div>
+      <p class="hint" id="hintFige" style="display:none">Cette facture est émise : elle ne peut plus être modifiée. Pour corriger, dupliquez-la en brouillon puis annulez celle-ci.</p>
       <p class="hint">« Voir / Imprimer » ouvre le document prêt à être enregistré en PDF ou imprimé. Aucune connexion n'est nécessaire.</p>
     </div>
   </section>
@@ -402,10 +448,14 @@ if(!localStorage.getItem('df_demo_soc')){
           <option value="">Tous les statuts</option>
           <option value="brouillon">brouillon</option>
           <option value="émise">émise</option>
-          <option value="envoyé">envoyé</option>
-          <option value="accepté">accepté</option>
+          <option value="payée partiellement">payée partiellement</option>
           <option value="payé">payé</option>
           <option value="impayé">impayé</option>
+          <option value="envoyé">envoyé</option>
+          <option value="accepté">accepté</option>
+          <option value="refusé">refusé</option>
+          <option value="expiré">expiré</option>
+          <option value="annulé">annulé</option>
         </select></div>
       </div>
       <div id="regWrap"></div>
@@ -458,8 +508,8 @@ if(!localStorage.getItem('df_demo_soc')){
     <div><span>TVA <span id="dTvaTxt"></span></span><span id="dTva"></span></div>
     <div><span id="dRemLbl">Remise</span><span id="dRem"></span></div>
     <div class="g"><span>Net à payer</span><span id="dNet"></span></div>
-    <div id="dAcompteLine" style="display:none"><span>Acompte versé</span><span id="dAcompte"></span></div>
-    <div id="dResteLine" style="display:none;font-weight:700"><span>Reste à payer</span><span id="dReste"></span></div>
+    <div id="dAcompteLine" style="display:none"><span>Déjà payé</span><span id="dAcompte"></span></div>
+    <div id="dResteLine" style="display:none;font-weight:700"><span>Solde dû</span><span id="dReste"></span></div>
   </div>
 
   <div id="dLettres" style="margin-top:8px;font-size:10.5px;font-style:italic;color:#333"></div>
@@ -469,9 +519,33 @@ if(!localStorage.getItem('df_demo_soc')){
   <div class="pied" id="dPied"></div>
 </div>
 
+<!-- ============ REÇU DE PAIEMENT ============ -->
+<div class="doc recu" id="recuDoc">
+  <div class="dh">
+    <div class="soc"><span id="rSoc">VOTRE ENTREPRISE</span><small id="rSocInfo"></small></div>
+    <div class="type"><b>REÇU</b><span id="rNum"></span><span id="rDate"></span></div>
+  </div>
+  <div class="parties">
+    <div><b>Reçu de</b><br><span id="rClient"></span></div>
+    <div><b>Au titre de</b><br><span id="rFacture"></span></div>
+  </div>
+  <table class="doc-t">
+    <thead><tr><th>Désignation</th><th class="n">Montant</th></tr></thead>
+    <tbody id="rLignes"></tbody>
+  </table>
+  <div class="tot">
+    <div><span>Montant de la facture</span><span id="rTotal"></span></div>
+    <div><span>Total payé à ce jour</span><span id="rPaye"></span></div>
+    <div class="g"><span>Solde restant</span><span id="rSolde"></span></div>
+  </div>
+  <div id="rLettres" style="margin-top:8px;font-size:10.5px;font-style:italic;color:#333"></div>
+  <div class="pied" id="rPied"></div>
+</div>
+
 <script>
 const F = n => (Math.round(n||0)).toLocaleString('fr-FR').replace(/\u202f|\u00a0/g,' ') + ' F';
 const TITRE_PAGE = document.title;
+const STATUTS = ['brouillon','émise','payée partiellement','payé','impayé','envoyé','accepté','refusé','expiré','annulé'];
 const $ = id => document.getElementById(id);
 let etat = JSON.parse(localStorage.getItem('df_demo_v1') || '{"docs":[],"compteur":{"DEV":0,"FACT":0}}');
 let courant = { type:'DEV', id:null, lignes:[{des:'',qte:1,pu:0}] };
@@ -489,8 +563,19 @@ function normaliserEtat(){
   etat.docs.forEach(d=>{
     if(d.statut === 'emise') d.statut = 'émise';
     if(!Array.isArray(d.lignes)) d.lignes = [];
+    if(!Array.isArray(d.paiements)) d.paiements = [];
+    if(!Array.isArray(d.historique)) d.historique = [];
     d.lignes.forEach(l=>{ if(l.tva == null) l.tva = (d.tva != null ? +d.tva : 18); });
     if(typeof d.total !== 'number') d.total = 0;
+    /* ancien champ acompte : converti en reglement pour ne rien perdre */
+    if(d.acompte > 0 && d.paiements.length === 0){
+      d.paiements.push({id:'mig'+d.id, montant: Math.round(d.acompte), date: d.date||'', mode:'Acompte', ref:''});
+    }
+    d.acompte = 0;
+    if(d.type === 'FACT' && d.statut !== 'annulé' && d.statut !== 'brouillon' && d.paiements.length){
+      const t = calcDoc(d);
+      d.statut = t.solde <= 0 ? 'payé' : 'payée partiellement';
+    }
   });
 }
 function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
@@ -530,7 +615,7 @@ function convertir(){
   $('echeance').value = plusJours($('date').value, 30);
   sauver();
   remplirDoc(); enregistrer();
-  toast('Facture ' + courant.num + ' créée depuis ' + devisNum);
+  toast('Facture ' + courant.num + ' en brouillon — vérifiez puis « Émettre la facture »');
 }
 
 function soc(){
@@ -572,6 +657,7 @@ function dessinerLignes(){
     const evt = inp.tagName === 'SELECT' ? 'change' : 'input';
     inp.addEventListener(evt, e=>{
       const i = +e.target.dataset.i, k = e.target.dataset.k;
+      if(k !== 'des' && (parseFloat(e.target.value) || 0) < 0){ e.target.value = 0; }
       courant.lignes[i][k] = (k==='des') ? e.target.value : (parseFloat(e.target.value)||0);
       $('lt'+i).textContent = F(courant.lignes[i].qte*courant.lignes[i].pu);
       calc();
@@ -584,37 +670,50 @@ function dessinerLignes(){
 }
 
 function totaux(){
-  const sous = courant.lignes.reduce((s,l)=>s + (l.qte||0)*(l.pu||0),0);
   const defaut = parseFloat($('tva').value) || 0;
   const parTaux = {};
+  let sous = 0, tva = 0;
   courant.lignes.forEach(l=>{
     const taux = (l.tva != null) ? +l.tva : defaut;
-    const base = (l.qte||0)*(l.pu||0);
-    if(!base) return;
-    parTaux[taux] = (parTaux[taux]||0) + base*taux/100;
+    const base = Math.round((l.qte||0)*(l.pu||0));
+    if(base <= 0) return;
+    const montantTva = Math.round(base*taux/100);
+    sous += base;
+    tva += montantTva;
+    parTaux[taux] = (parTaux[taux]||0) + montantTva;
   });
-  const tva = Object.keys(parTaux).reduce((s,k)=>s+parTaux[k],0);
   const brut = sous + tva;
   const remType = $('remiseType').value || 'fcfa';
-  const remVal = parseFloat($('remise').value)||0;
-  const rem = remType === 'pct' ? brut*remVal/100 : remVal;
+  const remVal = Math.max(0, parseFloat($('remise').value)||0);
+  const rem = remType === 'pct' ? Math.round(brut*remVal/100) : Math.round(remVal);
   const net = Math.max(0, brut - rem);
-  const ac = parseFloat($('acompte').value)||0;
-  return {sous, tva, parTaux, rem, remType, remVal, net, ac, reste:Math.max(0,net-ac)};
+  return {sous, tva, parTaux, rem, remType, remVal, net, ac:0, reste:net};
 }
 
 /* totaux recalcules depuis un document enregistre */
 function calcDoc(d){
   let ht = 0, tva = 0;
+  const parTaux = {};
   (d.lignes||[]).forEach(l=>{
-    const base = (l.qte||0)*(l.pu||0);
+    const base = Math.round((l.qte||0)*(l.pu||0));
+    if(base <= 0) return;
+    const taux = (l.tva != null ? +l.tva : (d.tva||0));
+    const montantTva = Math.round(base*taux/100);
     ht += base;
-    tva += base * ((l.tva != null ? +l.tva : (d.tva||0))/100);
+    tva += montantTva;
+    parTaux[taux] = (parTaux[taux]||0) + montantTva;
   });
   const brut = ht + tva;
-  const rem = d.remiseType === 'pct' ? brut*(d.remise||0)/100 : (d.remise||0);
+  const rem = d.remiseType === 'pct' ? Math.round(brut*(d.remise||0)/100) : Math.round(d.remise||0);
   const net = Math.max(0, brut - rem);
-  return {ht, tva, rem, net, reste: Math.max(0, net - (d.acompte||0))};
+  const paye = (d.paiements||[]).reduce((s,p)=>s + Math.round(p.montant||0), 0);
+  return {ht, tva, parTaux, rem, net, paye, solde: Math.max(0, net - paye)};
+}
+
+/* ecrit une ligne dans le journal du document */
+function journal(d, action){
+  d.historique = d.historique || [];
+  d.historique.push({date: new Date().toISOString().slice(0,19).replace('T',' '), action: action});
 }
 
 /* detail de TVA : une ligne par taux des qu'il y en a plusieurs */
@@ -745,10 +844,15 @@ function remplirDoc(){
   $('dRem').textContent = F(t.rem);
   $('dRemLbl').textContent = t.remType === 'pct' && t.remVal ? 'Remise ('+t.remVal+' %)' : 'Remise';
   $('dNet').textContent = F(t.net);
-  $('dAcompteLine').style.display = t.ac>0?'flex':'none';
-  $('dAcompte').textContent = F(t.ac);
-  $('dResteLine').style.display = t.ac>0?'flex':'none';
-  $('dReste').textContent = F(t.reste);
+  const dSave = courant.id ? etat.docs.find(x=>x.id===courant.id) : null;
+  const paye = dSave ? calcDoc(dSave).paye : 0;
+  $('dAcompteLine').style.display = paye>0 ? 'flex' : 'none';
+  $('dAcompte').textContent = F(paye);
+  $('dResteLine').style.display = paye>0 ? 'flex' : 'none';
+  $('dReste').textContent = F(Math.max(0, t.net - paye));
+  if(dSave && dSave.statut === 'annulé'){
+    $('dType').textContent = (courant.type === 'DEV' ? 'DEVIS ANNULÉ' : 'FACTURE ANNULÉE');
+  }
   const nf = ($('numFne').value || '').trim();
   const rf = ($('refFne').value || '').trim();
   $('dFne').innerHTML = (nf || rf)
@@ -774,14 +878,35 @@ function remplirDoc(){
 
 function apercu(){
   remplirDoc();
+  document.body.classList.remove('print-recu');
   const cli = ($('cliNom').value || '').trim().replace(/[\\/:*?"<>|]/g, '');
   document.title = (courant.type === 'DEV' ? 'Devis' : 'Facture') + ' ' + courant.num + (cli ? ' - ' + cli : '');
   window.print();
 }
-window.addEventListener('afterprint', () => { document.title = TITRE_PAGE; });
+window.addEventListener('afterprint', () => { document.title = TITRE_PAGE; document.body.classList.remove('print-recu'); });
+
+function validerSaisie(){
+  const err = [];
+  if(!($('cliNom').value || '').trim()) err.push('le nom du client');
+  if(!courant.lignes.some(l => (l.des||'').trim() !== '')) err.push('au moins une ligne avec une désignation');
+  if(courant.lignes.some(l => (l.qte||0) < 0 || (l.pu||0) < 0)) err.push('aucun montant négatif');
+  if((parseFloat($('remise').value)||0) < 0) err.push('aucune remise négative');
+  if(totaux().net <= 0) err.push('un total supérieur à zéro');
+  return err;
+}
 
 function enregistrer(){
-  const dejaEnBase = !!(courant.id && etat.docs.some(d => d.id === courant.id));
+  const existant = courant.id ? etat.docs.find(x => x.id === courant.id) : null;
+  if(existant && existant.type === 'FACT' && existant.statut !== 'brouillon'){
+    toast('Facture émise : utilisez « Dupliquer » ou « Annuler ».');
+    return;
+  }
+  const erreurs = validerSaisie();
+  if(erreurs.length){
+    toast('À compléter : ' + erreurs.join(', ') + '.');
+    return;
+  }
+  const dejaEnBase = !!existant;
   if (!dejaEnBase) courant.num = allouerNumero(courant.type);
   remplirDoc();
   calc();
@@ -791,12 +916,16 @@ function enregistrer(){
     date: $('date').value || new Date().toISOString().slice(0,10),
     echeance: $('echeance').value || '',
     refDevis: courant.refDevis || '',
-    client: $('cliNom').value, tel: $('cliTel').value, adr: $('cliAdr').value,
+    client: ($('cliNom').value || '').trim(), tel: $('cliTel').value, adr: $('cliAdr').value,
     lignes: JSON.parse(JSON.stringify(courant.lignes)), tva:+$('tva').value,
-    remise:+$('remise').value, remiseType:$('remiseType').value, acompte:+$('acompte').value,
+    remise:Math.max(0, +$('remise').value||0), remiseType:$('remiseType').value, acompte:0,
     numFne: $('numFne').value, refFne: $('refFne').value,
-    total: totaux().net, statut: (etat.docs.find(d=>d.id===courant.id)||{}).statut || (courant.type==='DEV'?'brouillon':'émise')
+    paiements: existant ? (existant.paiements || []) : [],
+    historique: existant ? (existant.historique || []) : [],
+    total: Math.round(totaux().net),
+    statut: existant ? existant.statut : 'brouillon'
   };
+  journal(doc, dejaEnBase ? 'Modification du brouillon' : 'Création');
   const i = etat.docs.findIndex(d=>d.id===doc.id);
   if(i>=0) etat.docs[i]=doc; else etat.docs.unshift(doc);
   courant.id = doc.id; courant.num = doc.num;
@@ -819,12 +948,13 @@ function enregistrer(){
   });
   etat.prestations = etat.prestations.slice(0, 300);
 
-  sauver(); afficherRegistre(); rafraichirListes(); verifierSauvegarde();
+  sauver(); appliquerVerrou(); dessinerPaiements(); afficherRegistre(); rafraichirListes(); verifierSauvegarde();
   toast('Enregistré : ' + doc.num);
 }
 
 function joursRetard(d){
-  if(d.type !== 'FACT' || d.statut === 'payé' || !d.echeance) return 0;
+  if(d.type !== 'FACT' || d.statut === 'payé' || d.statut === 'annulé' || !d.echeance) return 0;
+  if(calcDoc(d).solde <= 0) return 0;
   const e = new Date(d.echeance+'T00:00:00');
   if(isNaN(e.getTime())) return 0;
   const j = Math.floor((Date.now() - e.getTime()) / 86400000);
@@ -839,11 +969,14 @@ function afficherSynthese(){
     const x = new Date(d.date+'T12:00:00');
     return x.getMonth() === m && x.getFullYear() === a;
   };
-  const factures = etat.docs.filter(d=>d.type==='FACT' && d.statut!=='brouillon');
+  const factures = etat.docs.filter(d=>d.type==='FACT' && d.statut!=='brouillon' && d.statut!=='annulé');
   const ca = factures.filter(dansMois).reduce((s,d)=>s+(d.total||0),0);
-  const encaisse = factures.filter(d=>d.statut==='payé' && dansMois(d)).reduce((s,d)=>s+(d.total||0),0);
-  const nonPayees = factures.filter(d=>d.statut!=='payé');
-  const impaye = nonPayees.reduce((s,d)=>s+(d.total||0),0);
+  const encaisse = factures.reduce((s,d)=> s + (d.paiements||[]).filter(p=>{
+    const x = new Date((p.date||'')+'T12:00:00');
+    return x.getMonth() === m && x.getFullYear() === a;
+  }).reduce((x,p)=>x+Math.round(p.montant||0), 0), 0);
+  const nonPayees = factures.filter(d=>calcDoc(d).solde>0);
+  const impaye = nonPayees.reduce((s,d)=>s+calcDoc(d).solde,0);
   const retard = nonPayees.filter(d=>joursRetard(d)>0).length;
   const devisAttente = etat.docs.filter(d=>d.type==='DEV' && (d.statut==='brouillon'||d.statut==='envoyé'))
     .reduce((s,d)=>s+(d.total||0),0);
@@ -866,7 +999,6 @@ function afficherRegistre(){
   );
   if(!liste.length){ w.innerHTML = '<div class="vide">Aucun document ne correspond à cette recherche.</div>'; return; }
   let h = '<table class="reg"><thead><tr><th>N°</th><th>Client</th><th>Date</th><th style="text-align:right">Montant</th><th>Statut</th><th></th></tr></thead><tbody>';
-  const STATUTS = ['brouillon','émise','envoyé','accepté','payé','impayé'];
   liste.forEach(d=>{
     const opts = STATUTS.map(s=>`<option value="${s}"${s===d.statut?' selected':''}>${s}</option>`).join('');
     const jr = joursRetard(d);
@@ -916,6 +1048,154 @@ function ouvrir(id){
   $('tva').value=d.tva||18; $('remise').value=d.remise||0; $('remiseType').value=d.remiseType||'fcfa'; $('acompte').value=d.acompte||0;
   $('numFne').value=d.numFne||''; $('refFne').value=d.refFne||'';
   dessinerLignes(); calc(); basculer('edit');
+  appliquerVerrou(); dessinerPaiements();
+}
+
+/* ---------- verrou, emission, duplication, annulation ---------- */
+function docCourant(){ return courant.id ? etat.docs.find(x=>x.id===courant.id) : null; }
+
+function appliquerVerrou(){
+  const d = docCourant();
+  const fige = !!(d && d.type === 'FACT' && d.statut !== 'brouillon');
+  $('btnsDocFige').style.display = fige ? 'flex' : 'none';
+  $('hintFige').style.display = fige ? 'block' : 'none';
+  $('btnSave').style.display = fige ? 'none' : 'inline-block';
+  $('btnFact').style.display = (courant.type === 'DEV' && !fige) ? 'inline-block' : 'none';
+  $('btnEmettre').style.display = (d && d.type === 'FACT' && d.statut === 'brouillon') ? 'inline-block' : 'none';
+  ['cliNom','cliTel','cliAdr','date','echeance','remise','remiseType','tva','numFne','refFne'].forEach(id=>{
+    const el = $(id); if(el) el.disabled = fige;
+  });
+  document.querySelectorAll('#lignes input, #lignes select').forEach(el=>el.disabled = fige);
+  $('addLine').disabled = fige;
+}
+
+function emettre(){
+  const d = docCourant();
+  if(!d){ toast("Enregistrez d'abord la facture."); return; }
+  if(d.statut !== 'brouillon'){ toast('Cette facture est déjà émise.'); return; }
+  if(!confirm('Émettre la facture ' + d.num + ' ?\nElle ne pourra plus être modifiée ensuite.')) return;
+  d.statut = 'émise';
+  journal(d, 'Facture émise');
+  sauver(); appliquerVerrou(); afficherRegistre(); toast('Facture ' + d.num + ' émise');
+}
+
+function dupliquerDoc(){
+  const d = docCourant();
+  if(!d){ toast('Ouvrez un document enregistré.'); return; }
+  if(!confirm('Créer un brouillon à partir de ' + d.num + ' ?\nUn nouveau numéro sera attribué.')) return;
+  nouveau(d.type);
+  courant.refDevis = d.refDevis || null;
+  $('cliNom').value = d.client || '';
+  $('cliTel').value = d.tel || '';
+  $('cliAdr').value = d.adr || '';
+  $('date').value = new Date().toISOString().slice(0,10);
+  $('echeance').value = '';
+  $('tva').value = d.tva || 18;
+  $('remise').value = d.remise || 0;
+  $('remiseType').value = d.remiseType || 'fcfa';
+  $('numFne').value = ''; $('refFne').value = '';
+  courant.lignes = JSON.parse(JSON.stringify(d.lignes || []));
+  dessinerLignes(); calc(); appliquerVerrou(); dessinerPaiements();
+  toast('Brouillon prêt : vérifiez puis enregistrez');
+}
+
+function annulerDoc(){
+  const d = docCourant();
+  if(!d) return;
+  const motif = prompt("Motif de l'annulation (facultatif) :");
+  if(motif === null) return;
+  if(!confirm('Annuler définitivement ' + d.num + ' ?\nLe numéro ne sera pas réutilisé.')) return;
+  d.statut = 'annulé';
+  d.motifAnnulation = (motif || '').trim();
+  journal(d, 'Annulation' + (d.motifAnnulation ? ' — ' + d.motifAnnulation : ''));
+  sauver(); appliquerVerrou(); afficherRegistre(); toast(d.num + ' annulé');
+}
+
+/* ---------- paiements ---------- */
+function dessinerPaiements(){
+  const d = docCourant();
+  const bloc = $('blocPaiements');
+  if(!d || d.type !== 'FACT'){ bloc.style.display = 'none'; return; }
+  bloc.style.display = 'block';
+  const t = calcDoc(d);
+  const liste = d.paiements || [];
+  $('pmtListe').innerHTML = liste.length ? liste.map((p,i)=>`
+    <div class="pmt">
+      <div><b>${F(p.montant)}</b><small>${esc(p.date||'')} · ${esc(p.mode||'')}${p.ref ? ' · ' + esc(p.ref) : ''}</small></div>
+      <div class="actions">
+        <button data-recu="${i}">Reçu</button>
+        <button class="sup" data-sup-pmt="${i}">Supprimer</button>
+      </div>
+    </div>`).join('') : '<p class="hint">Aucun règlement enregistré pour cette facture.</p>';
+  $('pmtTotal').textContent = F(t.net);
+  $('pmtPaye').textContent = F(t.paye);
+  $('pmtSolde').textContent = F(t.solde);
+  $('pmtListe').querySelectorAll('[data-recu]').forEach(b=>b.addEventListener('click', ()=>imprimerRecu(d, +b.dataset.recu)));
+  $('pmtListe').querySelectorAll('[data-sup-pmt]').forEach(b=>b.addEventListener('click', ()=>supprimerPaiement(d, +b.dataset.supPmt)));
+}
+
+function ajouterPaiement(){
+  const d = docCourant();
+  if(!d){ toast("Enregistrez la facture avant d'ajouter un règlement."); return; }
+  if(d.statut === 'annulé'){ toast('Facture annulée : aucun règlement possible.'); return; }
+  const montant = Math.round(parseFloat($('pmtMontant').value) || 0);
+  const t = calcDoc(d);
+  if(montant <= 0){ toast('Saisissez un montant supérieur à zéro.'); return; }
+  if(montant > t.solde){ toast('Le montant dépasse le solde dû (' + F(t.solde) + ').'); return; }
+  const p = {
+    id: Date.now() + '' + Math.floor(Math.random()*99),
+    montant: montant,
+    date: $('pmtDate').value || new Date().toISOString().slice(0,10),
+    mode: $('pmtMode').value,
+    ref: ($('pmtRef').value || '').trim()
+  };
+  d.paiements = d.paiements || [];
+  d.paiements.push(p);
+  const apres = calcDoc(d);
+  d.statut = apres.solde <= 0 ? 'payé' : 'payée partiellement';
+  journal(d, 'Règlement de ' + F(montant) + ' (' + p.mode + (p.ref ? ' — ' + p.ref : '') + ')');
+  sauver(); dessinerPaiements(); afficherRegistre();
+  $('pmtMontant').value = ''; $('pmtRef').value = '';
+  toast('Règlement enregistré · solde ' + F(apres.solde));
+}
+
+function supprimerPaiement(d, i){
+  const p = (d.paiements||[])[i]; if(!p) return;
+  if(!confirm('Supprimer le règlement de ' + F(p.montant) + ' du ' + p.date + ' ?')) return;
+  d.paiements.splice(i,1);
+  const t = calcDoc(d);
+  if(d.statut !== 'annulé'){
+    d.statut = t.paye <= 0 ? 'émise' : (t.solde <= 0 ? 'payé' : 'payée partiellement');
+  }
+  journal(d, 'Suppression du règlement de ' + F(p.montant));
+  sauver(); dessinerPaiements(); afficherRegistre(); toast('Règlement supprimé');
+}
+
+/* ---------- recu de paiement ---------- */
+function remplirRecu(d, i){
+  const p = (d.paiements||[])[i]; if(!p) return;
+  const s = soc(), t = calcDoc(d);
+  const payeApres = (d.paiements||[]).slice(0, i+1).reduce((x,y)=>x + Math.round(y.montant||0), 0);
+  $('rSoc').textContent = s.nom;
+  $('rSocInfo').innerHTML = [s.adr, s.tel ? 'Tél. '+s.tel : '', s.ncc ? 'NCC/RCCM : '+s.ncc : ''].filter(Boolean).join('<br>');
+  $('rNum').textContent = d.num + '-R' + (i+1);
+  $('rDate').textContent = new Date((p.date||'')+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+  $('rClient').innerHTML = [d.client||'—', d.adr, d.tel].filter(Boolean).join('<br>');
+  $('rFacture').innerHTML = 'Facture ' + d.num + (d.date ? ' du ' + new Date(d.date+'T12:00:00').toLocaleDateString('fr-FR') : '');
+  $('rLignes').innerHTML = `<tr><td>Règlement ${esc(p.mode||'')}${p.ref ? ' — réf. ' + esc(p.ref) : ''}</td><td class="n">${F(p.montant)}</td></tr>`;
+  $('rTotal').textContent = F(t.net);
+  $('rPaye').textContent = F(payeApres);
+  $('rSolde').textContent = F(Math.max(0, t.net - payeApres));
+  $('rLettres').textContent = 'Reçu la somme de ' + nombreEnLettres(p.montant) + ' francs CFA.';
+  $('rPied').innerHTML = 'Reçu émis par ' + esc(s.nom) + (s.paiement ? ' — ' + esc(s.paiement) : '') + '.<br>Ce reçu atteste du règlement enregistré ; il ne remplace pas un relevé bancaire.';
+}
+
+function imprimerRecu(d, i){
+  remplirRecu(d, i);
+  document.body.classList.add('print-recu');
+  document.title = 'Recu ' + d.num + ' R' + (i+1);
+  window.print();
+  setTimeout(()=>document.body.classList.remove('print-recu'), 1500);
 }
 
 function nouveauDoc(){
@@ -931,6 +1211,7 @@ function nouveau(type){
   $('tva').value=18; $('remise').value=0; $('remiseType').value='fcfa'; $('acompte').value=0;
   $('numFne').value=''; $('refFne').value='';
   dessinerLignes(); calc();
+  appliquerVerrou(); dessinerPaiements();
 }
 
 /* ---------- relances par WhatsApp ---------- */
@@ -943,11 +1224,11 @@ function telInternational(tel){
 }
 
 function messageRelance(nom, docs, s){
-  const total = docs.reduce((x,d)=>x+(d.total||0),0);
+  const total = docs.reduce((x,d)=>x+calcDoc(d).solde,0);
   const lignes = docs.map(d=>{
     const j = joursRetard(d);
     const ech = d.echeance ? new Date(d.echeance+'T12:00:00').toLocaleDateString('fr-FR') : 'non échue';
-    return '• ' + d.num + ' — ' + F(d.total) + ' — échéance ' + ech + (j ? ' (' + j + ' jours de retard)' : '');
+    return '• ' + d.num + ' — ' + F(calcDoc(d).solde) + ' restant dû — échéance ' + ech + (j ? ' (' + j + ' jours de retard)' : '');
   }).join('\n');
   return 'Bonjour ' + nom + ',\n\n' +
     (docs.length > 1
@@ -959,7 +1240,7 @@ function messageRelance(nom, docs, s){
 }
 
 function relancer(nom){
-  const docs = etat.docs.filter(d => d.type === 'FACT' && d.statut !== 'payé' &&
+  const docs = etat.docs.filter(d => d.type === 'FACT' && d.statut !== 'annulé' && calcDoc(d).solde > 0 &&
     (d.client||'').trim().toLowerCase() === String(nom).toLowerCase());
   if(!docs.length){ toast('Aucune facture impayée pour ce client.'); return; }
   const s = soc();
@@ -981,16 +1262,16 @@ function csvContenu(){
     const doit = x.indexOf(';') >= 0 || x.indexOf('"') >= 0 || x.indexOf(LF) >= 0 || x.indexOf(CR) >= 0;
     return doit ? '"' + x.replace(/"/g,'""') + '"' : x;
   };
-  const entetes = ['Numéro','Type','Date','Échéance','Client','Statut','Total HT','TVA','Remise','Net à payer','Acompte','Reste à payer','N° FNE','Réf. FNE'];
+  const entetes = ['Numéro','Type','Date','Échéance','Client','Statut','Total HT','TVA','Remise','Net à payer','Payé','Solde dû','N° FNE','Réf. FNE'];
   const tries = etat.docs.slice().sort((a,b)=> (a.date||'').localeCompare(b.date||'') || (a.num||'').localeCompare(b.num||''));
   const lignes = tries.map(d=>{
     const t = calcDoc(d);
     return [d.num, d.type === 'DEV' ? 'Devis' : 'Facture', d.date||'', d.echeance||'', d.client||'', d.statut||'',
       Math.round(t.ht), Math.round(t.tva), Math.round(t.rem), Math.round(t.net),
-      Math.round(d.acompte||0), Math.round(t.reste), d.numFne||'', d.refFne||''].map(cellule).join(';');
+      Math.round(t.paye), Math.round(t.solde), d.numFne||'', d.refFne||''].map(cellule).join(';');
   });
-  const tot = tries.reduce((a,d)=>{ const t = calcDoc(d); a.ht+=t.ht; a.tva+=t.tva; a.rem+=t.rem; a.net+=t.net; return a; }, {ht:0,tva:0,rem:0,net:0});
-  lignes.push(['','','','','','TOTAUX', Math.round(tot.ht), Math.round(tot.tva), Math.round(tot.rem), Math.round(tot.net),'','','',''].map(cellule).join(';'));
+  const tot = tries.reduce((a,d)=>{ const t = calcDoc(d); a.ht+=t.ht; a.tva+=t.tva; a.rem+=t.rem; a.net+=t.net; a.paye+=t.paye; a.solde+=t.solde; return a; }, {ht:0,tva:0,rem:0,net:0,paye:0,solde:0});
+  lignes.push(['','','','','','TOTAUX', Math.round(tot.ht), Math.round(tot.tva), Math.round(tot.rem), Math.round(tot.net), Math.round(tot.paye), Math.round(tot.solde),'',''].map(cellule).join(';'));
   return BOM + entetes.join(';') + NL + lignes.join(NL) + NL;
 }
 
@@ -1017,9 +1298,9 @@ function clientsAgreges(){
     if(d.adr) c.adr = d.adr;
     c.nb++;
     if(!c.dernier || (d.date||'') > c.dernier) c.dernier = d.date || '';
-    if(d.type === 'FACT' && d.statut !== 'brouillon'){
+    if(d.type === 'FACT' && d.statut !== 'brouillon' && d.statut !== 'annulé'){
       c.facture += d.total || 0;
-      if(d.statut !== 'payé') c.du += d.total || 0;
+      c.du += calcDoc(d).solde;
     }
   });
   return [...map.values()].sort((a,b)=> (b.du - a.du) || (b.facture - a.facture) || a.nom.localeCompare(b.nom));
@@ -1084,6 +1365,10 @@ $('btnNew').addEventListener('click',nouveauDoc);
 });
 $('cliSearch').addEventListener('input', afficherClients);
 $('btnCsv').addEventListener('click', exporterCsv);
+$('btnEmettre').addEventListener('click', emettre);
+$('btnDup').addEventListener('click', dupliquerDoc);
+$('btnAnnuler').addEventListener('click', annulerDoc);
+$('btnPmt').addEventListener('click', ajouterPaiement);
 $('cliNom').addEventListener('change', (e) => {
   const c = (etat.clients || []).find(x => x.nom.toLowerCase() === (e.target.value || '').toLowerCase());
   if (c) { if (c.tel) $('cliTel').value = c.tel; if (c.adr) $('cliAdr').value = c.adr; }
@@ -1173,6 +1458,7 @@ $('btnReset').addEventListener('click',()=>{
 // démarrage
 normaliserEtat();
 chargerSoc();
+if(!$('pmtDate').value) $('pmtDate').value = new Date().toISOString().slice(0,10);
 if(!$('date').value) $('date').value = new Date().toISOString().slice(0,10);
 dessinerLignes(); calc(); afficherRegistre(); rafraichirListes(); verifierSauvegarde();
 </script>
