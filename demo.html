@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
-<title>Devis &amp; Factures</title>
+<title>Facto</title>
 <style>
   :root{
     --vert:#0B3B2E; --vert-clair:#155A45; --or:#C9A227; --or-clair:#E3C05A;
@@ -447,7 +447,7 @@ if(!localStorage.getItem('df_demo_soc')){
 <div id="toast"></div>
 <div class="app">
   <header class="top">
-    <div class="brand"><span class="brand-txt">Devis &amp; Factures<small id="socLabel">Votre entreprise</small></span></div>
+    <div class="brand"><span class="brand-txt">Facto<small id="socLabel">Votre entreprise</small></span></div>
     <div class="tabs">
       <button class="tab on" data-tab="edit">Nouveau</button>
       <button class="tab" data-tab="reg">Registre</button>
@@ -455,7 +455,7 @@ if(!localStorage.getItem('df_demo_soc')){
     </div>
   </header>
   <div id="installBar">
-    <span>Installez l'outil sur cet appareil pour l'ouvrir en un clic</span>
+    <span>Installez Facto sur cet appareil pour l'ouvrir en un clic</span>
     <button id="btnInstall">Installer</button>
   </div>
   <div id="backupBar">
@@ -1034,7 +1034,7 @@ function remplirDoc(){
   $('dPied').innerHTML = paiement +
     (s.paiement ? 'Règlement : ' + esc(s.paiement) + '.<br>' : '') +
     'Paiement par mobile money ou virement. Tout retard de paiement peut entraîner des frais de relance.<br>' +
-    'Document généré par le système de devis et factures de ' + esc(s.nom) + '.' +
+    'Document généré avec Facto — ' + esc(s.nom) + '.' +
     (mentionsDoc.length ? '<br>' + mentionsDoc.join(' — ') : '');
 }
 
