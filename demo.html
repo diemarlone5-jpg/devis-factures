@@ -304,6 +304,8 @@
   }
   .brand{color:#fff; font-size:17px; letter-spacing:-.2px}
   .brand-txt{display:flex; flex-direction:column; line-height:1.15}
+  .ver{position:absolute; right:12px; bottom:5px; font-size:8.5px; letter-spacing:.4px;
+       color:rgba(255,255,255,.38); pointer-events:none}
   .brand small{color:rgba(255,255,255,.62); font-size:11.5px; margin-top:2px; letter-spacing:.2px}
   .brand::before{
     width:38px; height:38px; flex:0 0 38px; border-radius:12px;
@@ -453,6 +455,7 @@ if(!localStorage.getItem('df_demo_soc')){
       <button class="tab" data-tab="reg">Registre</button>
       <button class="tab" data-tab="cli">Clients</button>
     </div>
+    <span class="ver" id="verBadge">v15</span>
   </header>
   <div id="installBar">
     <span>Installez Facto sur cet appareil pour l'ouvrir en un clic</span>
@@ -1585,7 +1588,20 @@ document.getElementById('btnBackupNow').addEventListener('click', () => {
 });
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.update();
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if(!nw) return;
+        nw.addEventListener('statechange', () => {
+          if(nw.state === 'installed' && navigator.serviceWorker.controller){
+            toast("Mise à jour prête : fermez puis rouvrez l'application");
+          }
+        });
+      });
+    }).catch(() => {});
+  });
 }
 $('btnImport').addEventListener('click',()=>$('fileImport').click());
 $('fileImport').addEventListener('change',(e)=>{
